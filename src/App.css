@@ -190,7 +190,7 @@
   color: #6b7280;
 }
 
-.task-details span {
+.task-details span:not(.overdue-label) {
   background-color: #f3f4f6;
   padding: 4px 8px;
   border-radius: 6px;
@@ -217,6 +217,17 @@
 .stat-card p {
   color: #6b7280;
   font-size: 14px;
+}
+
+.overdue-label {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
 }
 .task-filters {
   display: flex;

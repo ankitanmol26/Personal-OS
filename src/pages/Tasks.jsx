@@ -70,6 +70,35 @@ useEffect(() => {
 
   return true;
 });
+const sortedTasks = [...filteredTasks].sort(
+  (a, b) => {
+
+    // Completed tasks go to the bottom
+    if (a.completed && !b.completed) {
+      return 1;
+    }
+
+    if (!a.completed && b.completed) {
+      return -1;
+    }
+
+    // Tasks without due dates go after tasks with due dates
+    if (!a.dueDate && b.dueDate) {
+      return 1;
+    }
+
+    if (a.dueDate && !b.dueDate) {
+      return -1;
+    }
+
+    // Earlier due date comes first
+    if (a.dueDate && b.dueDate) {
+      return a.dueDate.localeCompare(b.dueDate);
+    }
+
+    return 0;
+  }
+);
 
   function deleteTask(id) {
     setTasks(
@@ -202,7 +231,17 @@ const highPriorityTasks = tasks.filter(
 
         ) : (
 
-          filteredTasks.map((task) => (
+          sortedTasks.map((task) => {
+            const today = new Date()
+              .toISOString()
+              .split("T")[0];
+
+            const isOverdue =
+              task.dueDate &&
+              task.dueDate < today &&
+              !task.completed;
+
+            return (
 
             <div className="task-item" key={task.id}>
 
@@ -239,6 +278,12 @@ const highPriorityTasks = tasks.filter(
                     {task.dueDate && (
                       <span>
                         Due: {task.dueDate}
+
+                        {isOverdue && (
+                          <span className="overdue-label">
+                            Overdue
+                          </span>
+                        )}
                       </span>
                     )}
 
@@ -257,7 +302,8 @@ const highPriorityTasks = tasks.filter(
 
             </div>
 
-          ))
+            );
+          })
 
         )}
 
