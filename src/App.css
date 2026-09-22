@@ -790,3 +790,7 @@
 .focus-empty {
   color: #6b7280;
 }
+.active-link {
+  background-color: #2563eb;
+  color: white !important;
+}

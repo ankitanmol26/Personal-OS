@@ -1,19 +1,62 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 function Sidebar() {
   return (
     <aside className="sidebar">
+
       <div className="logo">
         PersonalOS
       </div>
 
       <nav>
-        <Link to="/">Dashboard</Link>
-        <Link to="/tasks">Tasks</Link>
-        <Link to="/dsa">DSA Tracker</Link>
-        <Link to="/projects">Projects</Link>
-        <Link to="/notes">Notes</Link>
+
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          Dashboard
+        </NavLink>
+
+        <NavLink
+          to="/tasks"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          Tasks
+        </NavLink>
+
+        <NavLink
+          to="/dsa"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          DSA Tracker
+        </NavLink>
+
+        <NavLink
+          to="/projects"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          Projects
+        </NavLink>
+
+        <NavLink
+          to="/notes"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          Notes
+        </NavLink>
+
       </nav>
+
     </aside>
   );
 }
