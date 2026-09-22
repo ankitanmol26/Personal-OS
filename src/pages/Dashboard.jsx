@@ -7,7 +7,13 @@ function Dashboard() {
   const [dsaTotal, setDsaTotal] = useState(0);
   const [dsaSolved, setDsaSolved] = useState(0);
 
-  useEffect(() => {
+  const [projectCount, setProjectCount] = useState(0);
+  const [noteCount, setNoteCount] = useState(0);
+  const [pendingTaskList, setPendingTaskList] = useState([]);
+const [unsolvedProblems, setUnsolvedProblems] = useState([]);
+  function loadDashboardData() {
+    // Tasks
+
     const savedTasks = localStorage.getItem("tasks");
 
     if (savedTasks) {
@@ -15,10 +21,19 @@ function Dashboard() {
 
       setTaskCount(tasks.length);
 
-      setPendingTasks(
-        tasks.filter((task) => !task.completed).length
-      );
+      const pending = tasks.filter(
+  (task) => !task.completed
+);
+
+setPendingTasks(pending.length);
+setPendingTaskList(pending);
+    } else {
+      setTaskCount(0);
+setPendingTasks(0);
+setPendingTaskList([]);
     }
+
+    // DSA
 
     const savedProblems =
       localStorage.getItem("dsaProblems");
@@ -28,11 +43,70 @@ function Dashboard() {
 
       setDsaTotal(problems.length);
 
-      setDsaSolved(
-        problems.filter((problem) => problem.solved).length
-      );
+      const unsolved = problems.filter(
+  (problem) => !problem.solved
+);
+
+setDsaSolved(
+  problems.filter((problem) => problem.solved).length
+);
+
+setUnsolvedProblems(unsolved);
+    } else {
+      setDsaTotal(0);
+      setDsaSolved(0);
+      setUnsolvedProblems([]);
     }
+
+    // Projects
+
+    const savedProjects =
+      localStorage.getItem("projects");
+
+    if (savedProjects) {
+      const projects = JSON.parse(savedProjects);
+
+      setProjectCount(projects.length);
+    } else {
+      setProjectCount(0);
+    }
+
+    // Notes
+
+    const savedNotes =
+      localStorage.getItem("notes");
+
+    if (savedNotes) {
+      const notes = JSON.parse(savedNotes);
+
+      setNoteCount(notes.length);
+    } else {
+      setNoteCount(0);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardData();
+
+    window.addEventListener(
+      "focus",
+      loadDashboardData
+    );
+
+    return () => {
+      window.removeEventListener(
+        "focus",
+        loadDashboardData
+      );
+    };
   }, []);
+
+  const dsaProgress =
+    dsaTotal === 0
+      ? 0
+      : Math.round(
+          (dsaSolved / dsaTotal) * 100
+        );
 
   return (
     <main className="dashboard">
@@ -45,8 +119,9 @@ function Dashboard() {
 
       <div className="dashboard-grid">
 
-        <div className="dashboard-card">
+        {/* Tasks */}
 
+        <div className="dashboard-card">
           <h3>Tasks</h3>
 
           <div className="dashboard-number">
@@ -56,11 +131,11 @@ function Dashboard() {
           <p>
             pending out of {taskCount}
           </p>
-
         </div>
 
-        <div className="dashboard-card">
+        {/* DSA */}
 
+        <div className="dashboard-card">
           <h3>DSA</h3>
 
           <div className="dashboard-number">
@@ -70,32 +145,115 @@ function Dashboard() {
           <p>
             solved out of {dsaTotal}
           </p>
-
         </div>
 
-        <div className="dashboard-card">
+        {/* DSA Progress */}
 
+        <div className="dashboard-card">
           <h3>DSA Progress</h3>
 
           <div className="dashboard-number">
-
-            {dsaTotal === 0
-              ? 0
-              : Math.round(
-                  (dsaSolved / dsaTotal) * 100
-                )}
-
-            %
-
+            {dsaProgress}%
           </div>
 
           <p>
             overall completion
           </p>
+        </div>
 
+        {/* Projects */}
+
+        <div className="dashboard-card">
+          <h3>Projects</h3>
+
+          <div className="dashboard-number">
+            {projectCount}
+          </div>
+
+          <p>
+            total projects
+          </p>
+        </div>
+
+        {/* Notes */}
+
+        <div className="dashboard-card">
+          <h3>Notes</h3>
+
+          <div className="dashboard-number">
+            {noteCount}
+          </div>
+
+          <p>
+            total notes
+          </p>
         </div>
 
       </div>
+      <div className="focus-section">
+
+  <h2>Today's Focus</h2>
+
+  <div className="focus-grid">
+
+    <div className="focus-card">
+
+      <h3>Pending Tasks</h3>
+
+      {pendingTaskList.length === 0 ? (
+        <p className="focus-empty">
+          No pending tasks.
+        </p>
+      ) : (
+        <ul>
+          {pendingTaskList
+            .slice(0, 5)
+            .map((task) => (
+              <li key={task.id}>
+                <strong>{task.text}</strong>
+
+                <span>
+                  {task.priority}
+                </span>
+              </li>
+            ))}
+        </ul>
+      )}
+
+    </div>
+
+
+    <div className="focus-card">
+
+      <h3>DSA Queue</h3>
+
+      {unsolvedProblems.length === 0 ? (
+        <p className="focus-empty">
+          No unsolved problems.
+        </p>
+      ) : (
+        <ul>
+          {unsolvedProblems
+            .slice(0, 5)
+            .map((problem) => (
+              <li key={problem.id}>
+                <strong>
+                  {problem.title}
+                </strong>
+
+                <span>
+                  {problem.difficulty}
+                </span>
+              </li>
+            ))}
+        </ul>
+      )}
+
+    </div>
+
+  </div>
+
+</div>
 
     </main>
   );
