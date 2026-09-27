@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
+import {
+  getStorage,
+  setStorage,
+} from "../utils/storage";
 
 function Tasks() {
   const [tasks, setTasks] = useState(() => {
-  const savedTasks = localStorage.getItem("tasks");
+    return getStorage("tasks");
+  });
 
-  return savedTasks
-    ? JSON.parse(savedTasks)
-    : [];
-});
-useEffect(() => {
-  localStorage.setItem(
-    "tasks",
-    JSON.stringify(tasks)
-  );
-}, [tasks]);
+  useEffect(() => {
+    setStorage("tasks", tasks);
+  }, [tasks]);
   const [filter, setFilter] = useState("All");
 
   const [taskText, setTaskText] = useState("");

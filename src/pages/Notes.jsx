@@ -1,25 +1,21 @@
 import { useEffect, useState } from "react";
+import {
+  getStorage,
+  setStorage,
+} from "../utils/storage";
 
 function Notes() {
-  const [notes, setNotes] = useState(() => {
-    const savedNotes = localStorage.getItem("notes");
-
-    return savedNotes
-      ? JSON.parse(savedNotes)
-      : [];
-  });
+ const [notes, setNotes] = useState(() => {
+  return getStorage("notes");
+});
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("DSA");
   const [content, setContent] = useState("");
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem(
-      "notes",
-      JSON.stringify(notes)
-    );
-  }, [notes]);
+useEffect(() => {
+  setStorage("notes", notes);
+}, [notes]);
 
   function addNote(event) {
     event.preventDefault();

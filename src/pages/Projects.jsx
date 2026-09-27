@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-
+import {
+  getStorage,
+  setStorage,
+} from "../utils/storage";
 function Projects() {
-  const [projects, setProjects] = useState(() => {
-    const savedProjects = localStorage.getItem("projects");
-
-    return savedProjects
-      ? JSON.parse(savedProjects)
-      : [];
-  });
+const [projects, setProjects] = useState(() => {
+  return getStorage("projects");
+});
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -17,12 +16,9 @@ function Projects() {
   const [githubLink, setGithubLink] = useState("");
   const [liveLink, setLiveLink] = useState("");
 
-  useEffect(() => {
-    localStorage.setItem(
-      "projects",
-      JSON.stringify(projects)
-    );
-  }, [projects]);
+ useEffect(() => {
+  setStorage("projects", projects);
+}, [projects]);
 
   function addProject(event) {
     event.preventDefault();

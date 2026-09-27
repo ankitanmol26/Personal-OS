@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  getStorage,
+  setStorage,
+} from "../utils/storage";
 
 function DSA() {
   const [filter, setFilter] = useState("All");
@@ -45,17 +49,15 @@ const [notes, setNotes] = useState("");
 ];
 
 const [problems, setProblems] = useState(() => {
-  const savedProblems = localStorage.getItem("dsaProblems");
+  const savedProblems = getStorage(
+    "dsaProblems",
+    null
+  );
 
-  return savedProblems
-    ? JSON.parse(savedProblems)
-    : defaultProblems;
+  return savedProblems ?? defaultProblems;
 });
 useEffect(() => {
-  localStorage.setItem(
-    "dsaProblems",
-    JSON.stringify(problems)
-  );
+  setStorage("dsaProblems", problems);
 }, [problems]);
 function addProblem(event) {
   event.preventDefault();

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import StatCard from "../components/StatCard";
+import { getStorage } from "../utils/storage";
 
 function Dashboard() {
   const [taskCount, setTaskCount] = useState(0);
@@ -11,79 +13,60 @@ function Dashboard() {
   const [noteCount, setNoteCount] = useState(0);
   const [pendingTaskList, setPendingTaskList] = useState([]);
 const [unsolvedProblems, setUnsolvedProblems] = useState([]);
-  function loadDashboardData() {
-    // Tasks
+ function loadDashboardData() {
 
-    const savedTasks = localStorage.getItem("tasks");
+  // Tasks
 
-    if (savedTasks) {
-      const tasks = JSON.parse(savedTasks);
+  const tasks = getStorage("tasks");
 
-      setTaskCount(tasks.length);
+  setTaskCount(tasks.length);
 
-      const pending = tasks.filter(
-  (task) => !task.completed
-);
+  const pending = tasks.filter(
+    (task) => !task.completed
+  );
 
-setPendingTasks(pending.length);
-setPendingTaskList(pending);
-    } else {
-      setTaskCount(0);
-setPendingTasks(0);
-setPendingTaskList([]);
-    }
+  setPendingTasks(pending.length);
+  setPendingTaskList(pending);
 
-    // DSA
 
-    const savedProblems =
-      localStorage.getItem("dsaProblems");
+  // DSA
 
-    if (savedProblems) {
-      const problems = JSON.parse(savedProblems);
+  const problems = getStorage(
+    "dsaProblems",
+    []
+  );
 
-      setDsaTotal(problems.length);
+  setDsaTotal(problems.length);
 
-      const unsolved = problems.filter(
-  (problem) => !problem.solved
-);
+  const solved = problems.filter(
+    (problem) => problem.solved
+  );
 
-setDsaSolved(
-  problems.filter((problem) => problem.solved).length
-);
+  const unsolved = problems.filter(
+    (problem) => !problem.solved
+  );
 
-setUnsolvedProblems(unsolved);
-    } else {
-      setDsaTotal(0);
-      setDsaSolved(0);
-      setUnsolvedProblems([]);
-    }
+  setDsaSolved(solved.length);
+  setUnsolvedProblems(unsolved);
 
-    // Projects
 
-    const savedProjects =
-      localStorage.getItem("projects");
+  // Projects
 
-    if (savedProjects) {
-      const projects = JSON.parse(savedProjects);
+  const projects = getStorage(
+    "projects"
+  );
 
-      setProjectCount(projects.length);
-    } else {
-      setProjectCount(0);
-    }
+  setProjectCount(projects.length);
 
-    // Notes
 
-    const savedNotes =
-      localStorage.getItem("notes");
+  // Notes
 
-    if (savedNotes) {
-      const notes = JSON.parse(savedNotes);
+  const notes = getStorage(
+    "notes"
+  );
 
-      setNoteCount(notes.length);
-    } else {
-      setNoteCount(0);
-    }
-  }
+  setNoteCount(notes.length);
+}
 
   useEffect(() => {
     loadDashboardData();
@@ -119,75 +102,35 @@ setUnsolvedProblems(unsolved);
 
       <div className="dashboard-grid">
 
-        {/* Tasks */}
+        <StatCard
+          title="Tasks"
+          value={pendingTasks}
+          description={`pending out of ${taskCount}`}
+        />
 
-        <div className="dashboard-card">
-          <h3>Tasks</h3>
+        <StatCard
+          title="DSA"
+          value={dsaSolved}
+          description={`solved out of ${dsaTotal}`}
+        />
 
-          <div className="dashboard-number">
-            {pendingTasks}
-          </div>
+        <StatCard
+          title="DSA Progress"
+          value={`${dsaProgress}%`}
+          description="overall completion"
+        />
 
-          <p>
-            pending out of {taskCount}
-          </p>
-        </div>
+        <StatCard
+          title="Projects"
+          value={projectCount}
+          description="total projects"
+        />
 
-        {/* DSA */}
-
-        <div className="dashboard-card">
-          <h3>DSA</h3>
-
-          <div className="dashboard-number">
-            {dsaSolved}
-          </div>
-
-          <p>
-            solved out of {dsaTotal}
-          </p>
-        </div>
-
-        {/* DSA Progress */}
-
-        <div className="dashboard-card">
-          <h3>DSA Progress</h3>
-
-          <div className="dashboard-number">
-            {dsaProgress}%
-          </div>
-
-          <p>
-            overall completion
-          </p>
-        </div>
-
-        {/* Projects */}
-
-        <div className="dashboard-card">
-          <h3>Projects</h3>
-
-          <div className="dashboard-number">
-            {projectCount}
-          </div>
-
-          <p>
-            total projects
-          </p>
-        </div>
-
-        {/* Notes */}
-
-        <div className="dashboard-card">
-          <h3>Notes</h3>
-
-          <div className="dashboard-number">
-            {noteCount}
-          </div>
-
-          <p>
-            total notes
-          </p>
-        </div>
+        <StatCard
+          title="Notes"
+          value={noteCount}
+          description="total notes"
+        />
 
       </div>
       <div className="focus-section">
