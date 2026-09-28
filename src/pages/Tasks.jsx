@@ -4,6 +4,16 @@ import {
   setStorage,
 } from "../utils/storage";
 
+const TASK_CATEGORIES = [
+  "General",
+  "DSA",
+  "Development",
+  "College",
+  "Project",
+  "Career",
+  "Personal",
+];
+
 function Tasks() {
   const [tasks, setTasks] = useState(() => {
     return getStorage("tasks");
@@ -13,11 +23,21 @@ function Tasks() {
     setStorage("tasks", tasks);
   }, [tasks]);
   const [filter, setFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
 
   const [taskText, setTaskText] = useState("");
-  const [category, setCategory] = useState("College");
+  const [category, setCategory] = useState("General");
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState(null);
+
+  function handleEditTask(task) {
+    setTaskText(task.text);
+    setCategory(task.category || "General");
+    setPriority(task.priority);
+    setDueDate(task.dueDate || "");
+    setEditingTaskId(task.id);
+  }
 
   function addTask(event) {
     event.preventDefault();
@@ -26,19 +46,40 @@ function Tasks() {
       return;
     }
 
-    const newTask = {
-      id: Date.now(),
-      text: taskText,
-      category: category,
-      priority: priority,
-      dueDate: dueDate,
-      completed: false,
-    };
+    if (editingTaskId !== null) {
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === editingTaskId
+            ? {
+                ...task,
+                text: taskText.trim(),
+                category,
+                priority,
+                dueDate,
+              }
+            : task
+        )
+      );
 
-    setTasks([...tasks, newTask]);
+      setEditingTaskId(null);
+    } else {
+      const newTask = {
+        id: Date.now(),
+        text: taskText.trim(),
+        category,
+        priority,
+        dueDate,
+        completed: false,
+      };
+
+      setTasks((currentTasks) => [
+        ...currentTasks,
+        newTask,
+      ]);
+    }
 
     setTaskText("");
-    setCategory("College");
+    setCategory("General");
     setPriority("Medium");
     setDueDate("");
   }
@@ -53,21 +94,22 @@ function Tasks() {
     );
   }
   const filteredTasks = tasks.filter((task) => {
+    const matchesCategory =
+      categoryFilter === "All" ||
+      (task.category || "General") === categoryFilter;
 
-  if (filter === "Pending") {
-    return !task.completed;
-  }
+    let matchesStatus = true;
 
-  if (filter === "Completed") {
-    return task.completed;
-  }
+    if (filter === "Pending") {
+      matchesStatus = !task.completed;
+    } else if (filter === "Completed") {
+      matchesStatus = task.completed;
+    } else if (filter === "High Priority") {
+      matchesStatus = task.priority === "High" && !task.completed;
+    }
 
-  if (filter === "High Priority") {
-    return task.priority === "High" && !task.completed;
-  }
-
-  return true;
-});
+    return matchesStatus && matchesCategory;
+  });
 const sortedTasks = [...filteredTasks].sort(
   (a, b) => {
 
@@ -159,16 +201,6 @@ const highPriorityTasks = tasks.filter(
         />
 
         <select
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
-        >
-          <option value="DSA">DSA</option>
-          <option value="College">College</option>
-          <option value="Project">Project</option>
-          <option value="Personal">Personal</option>
-        </select>
-
-        <select
           value={priority}
           onChange={(event) => setPriority(event.target.value)}
         >
@@ -177,6 +209,23 @@ const highPriorityTasks = tasks.filter(
           <option value="High">High</option>
         </select>
 
+        <div className="form-group">
+          <label htmlFor="task-category">
+            Category
+          </label>
+          <select
+            id="task-category"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
+            {TASK_CATEGORIES.map((taskCategory) => (
+              <option key={taskCategory} value={taskCategory}>
+                {taskCategory}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <input
           type="date"
           value={dueDate}
@@ -184,8 +233,23 @@ const highPriorityTasks = tasks.filter(
         />
 
         <button type="submit">
-          Add Task
+          {editingTaskId !== null ? "Update Task" : "Add Task"}
         </button>
+
+        {editingTaskId !== null && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingTaskId(null);
+              setTaskText("");
+              setCategory("General");
+              setPriority("Medium");
+              setDueDate("");
+            }}
+          >
+            Cancel
+          </button>
+        )}
 
       </form>
       <div className="task-filters">
@@ -219,6 +283,23 @@ const highPriorityTasks = tasks.filter(
   </button>
 
 </div>
+      <div className="task-filter">
+        <label htmlFor="category-filter">
+          Category
+        </label>
+        <select
+          id="category-filter"
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value)}
+        >
+          <option value="All">All</option>
+          {TASK_CATEGORIES.map((taskCategory) => (
+            <option key={taskCategory} value={taskCategory}>
+              {taskCategory}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="task-list">
 
         {tasks.length === 0 ? (
@@ -265,8 +346,8 @@ const highPriorityTasks = tasks.filter(
 
                   <div className="task-details">
 
-                    <span>
-                      {task.category}
+                    <span className="task-category">
+                      {task.category || "General"}
                     </span>
 
                     <span>
@@ -291,12 +372,22 @@ const highPriorityTasks = tasks.filter(
 
               </div>
 
-              <button
-                className="delete-button"
-                onClick={() => deleteTask(task.id)}
-              >
-                Delete
-              </button>
+              <div className="task-actions">
+                <button
+                  type="button"
+                  className="edit-button"
+                  onClick={() => handleEditTask(task)}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="delete-button"
+                  onClick={() => deleteTask(task.id)}
+                >
+                  Delete
+                </button>
+              </div>
 
             </div>
 

@@ -1,95 +1,23 @@
-import { useEffect, useState } from "react";
 import StatCard from "../components/StatCard";
-import { getStorage } from "../utils/storage";
+import TodayFocus from "../components/TodayFocus";
+import DSAProgress from "../components/DSAProgress";
+import UpcomingTasks from "../components/UpcomingTasks";
+import useDashboardData from "../hooks/useDashboardData";
+import RecentActivity from "../components/RecentActivity";
 
 function Dashboard() {
-  const [taskCount, setTaskCount] = useState(0);
-  const [pendingTasks, setPendingTasks] = useState(0);
-
-  const [dsaTotal, setDsaTotal] = useState(0);
-  const [dsaSolved, setDsaSolved] = useState(0);
-
-  const [projectCount, setProjectCount] = useState(0);
-  const [noteCount, setNoteCount] = useState(0);
-  const [pendingTaskList, setPendingTaskList] = useState([]);
-const [unsolvedProblems, setUnsolvedProblems] = useState([]);
- function loadDashboardData() {
-
-  // Tasks
-
-  const tasks = getStorage("tasks");
-
-  setTaskCount(tasks.length);
-
-  const pending = tasks.filter(
-    (task) => !task.completed
-  );
-
-  setPendingTasks(pending.length);
-  setPendingTaskList(pending);
-
-
-  // DSA
-
-  const problems = getStorage(
-    "dsaProblems",
-    []
-  );
-
-  setDsaTotal(problems.length);
-
-  const solved = problems.filter(
-    (problem) => problem.solved
-  );
-
-  const unsolved = problems.filter(
-    (problem) => !problem.solved
-  );
-
-  setDsaSolved(solved.length);
-  setUnsolvedProblems(unsolved);
-
-
-  // Projects
-
-  const projects = getStorage(
-    "projects"
-  );
-
-  setProjectCount(projects.length);
-
-
-  // Notes
-
-  const notes = getStorage(
-    "notes"
-  );
-
-  setNoteCount(notes.length);
-}
-
-  useEffect(() => {
-    loadDashboardData();
-
-    window.addEventListener(
-      "focus",
-      loadDashboardData
-    );
-
-    return () => {
-      window.removeEventListener(
-        "focus",
-        loadDashboardData
-      );
-    };
-  }, []);
-
-  const dsaProgress =
-    dsaTotal === 0
-      ? 0
-      : Math.round(
-          (dsaSolved / dsaTotal) * 100
-        );
+  const {
+    tasks,
+    dsaProblems,
+    pendingTasks,
+    pendingTaskCount,
+    dsaTotal,
+    dsaSolved,
+    unsolvedProblems,
+    dsaProgress,
+    projectCount,
+    noteCount,
+  } = useDashboardData();
 
   return (
     <main className="dashboard">
@@ -104,8 +32,8 @@ const [unsolvedProblems, setUnsolvedProblems] = useState([]);
 
         <StatCard
           title="Tasks"
-          value={pendingTasks}
-          description={`pending out of ${taskCount}`}
+          value={pendingTaskCount}
+          description={`pending out of ${tasks.length}`}
         />
 
         <StatCard
@@ -133,70 +61,21 @@ const [unsolvedProblems, setUnsolvedProblems] = useState([]);
         />
 
       </div>
-      <div className="focus-section">
-
-  <h2>Today's Focus</h2>
-
-  <div className="focus-grid">
-
-    <div className="focus-card">
-
-      <h3>Pending Tasks</h3>
-
-      {pendingTaskList.length === 0 ? (
-        <p className="focus-empty">
-          No pending tasks.
-        </p>
-      ) : (
-        <ul>
-          {pendingTaskList
-            .slice(0, 5)
-            .map((task) => (
-              <li key={task.id}>
-                <strong>{task.text}</strong>
-
-                <span>
-                  {task.priority}
-                </span>
-              </li>
-            ))}
-        </ul>
-      )}
-
-    </div>
-
-
-    <div className="focus-card">
-
-      <h3>DSA Queue</h3>
-
-      {unsolvedProblems.length === 0 ? (
-        <p className="focus-empty">
-          No unsolved problems.
-        </p>
-      ) : (
-        <ul>
-          {unsolvedProblems
-            .slice(0, 5)
-            .map((problem) => (
-              <li key={problem.id}>
-                <strong>
-                  {problem.title}
-                </strong>
-
-                <span>
-                  {problem.difficulty}
-                </span>
-              </li>
-            ))}
-        </ul>
-      )}
-
-    </div>
-
-  </div>
-
-</div>
+      <DSAProgress
+  solved={dsaSolved}
+  total={dsaTotal}
+/>
+      <UpcomingTasks
+        tasks={tasks}
+      />
+      <TodayFocus
+        pendingTaskList={pendingTasks}
+        unsolvedProblems={unsolvedProblems}
+      />
+      <RecentActivity
+        tasks={tasks}
+        dsaProblems={dsaProblems}
+      />
 
     </main>
   );
