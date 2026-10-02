@@ -11,10 +11,13 @@ function Dashboard() {
     dsaProblems,
     pendingTasks,
     pendingTaskCount,
+    overdueTaskCount,
     dsaTotal,
     dsaSolved,
     unsolvedProblems,
     dsaProgress,
+    dsaDueTodayCount,
+    dsaMasteredCount,
     projectCount,
     noteCount,
   } = useDashboardData();
@@ -59,12 +62,38 @@ function Dashboard() {
           value={noteCount}
           description="total notes"
         />
+        <StatCard
+  title="Overdue"
+  value={overdueTaskCount}
+  description="tasks need attention"
+/>
 
       </div>
       <DSAProgress
-  solved={dsaSolved}
-  total={dsaTotal}
-/>
+        solved={dsaSolved}
+        total={dsaTotal}
+      />
+
+      <section className="dashboard-revision">
+        <div className="section-heading">
+          <h3>DSA Revision</h3>
+          <p>
+            Keep your solved problems fresh.
+          </p>
+        </div>
+
+        <div className="dashboard-revision-stats">
+          <div>
+            <span>Due Today</span>
+            <strong>{dsaDueTodayCount}</strong>
+          </div>
+
+          <div>
+            <span>Mastered</span>
+            <strong>{dsaMasteredCount}</strong>
+          </div>
+        </div>
+      </section>
       <UpcomingTasks
         tasks={tasks}
       />

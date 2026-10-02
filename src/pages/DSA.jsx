@@ -4,8 +4,15 @@ import {
   setStorage,
 } from "../utils/storage";
 
+import {
+  getTodayDate,
+  addDays,
+   isRevisionDue,
+} from "../utils/date";
+
 function DSA() {
   const [filter, setFilter] = useState("All");
+  const [revisionFilter, setRevisionFilter] = useState("All");
   const [title, setTitle] = useState("");
 const [topic, setTopic] = useState("Arrays");
 const [difficulty, setDifficulty] = useState("Easy");
@@ -21,6 +28,7 @@ const [notes, setNotes] = useState("");
     difficulty: "Easy",
     platform: "LeetCode",
     solved: true,
+    revisionStatus: "Needs Revision",
   },
   {
     id: 2,
@@ -29,6 +37,7 @@ const [notes, setNotes] = useState("");
     difficulty: "Easy",
     platform: "GFG",
     solved: true,
+revisionStatus: "Not Started",
   },
   {
     id: 3,
@@ -37,6 +46,7 @@ const [notes, setNotes] = useState("");
     difficulty: "Easy",
     platform: "LeetCode",
     solved: false,
+revisionStatus: "Not Started",
   },
   {
     id: 4,
@@ -45,6 +55,7 @@ const [notes, setNotes] = useState("");
     difficulty: "Medium",
     platform: "LeetCode",
     solved: false,
+    revisionStatus: "Not Started",
   },
 ];
 
@@ -76,6 +87,9 @@ function addProblem(event) {
   problemLink: problemLink,
   notes: notes,
   solved: false,
+  revisionStatus: "Not Started",
+   revisionCount: 0,
+  nextRevisionDate: null,
 };
 
   setProblems([...problems, newProblem]);
@@ -102,6 +116,52 @@ setNotes("");
     );
   }
 
+  function updateRevisionStatus(id, status) {
+    setProblems(
+      problems.map((problem) =>
+        problem.id === id
+          ? {
+              ...problem,
+              revisionStatus: status,
+            }
+          : problem
+      )
+    );
+  }
+  function reviseProblem(id) {
+  const today = getTodayDate();
+
+  setProblems(
+    problems.map((problem) => {
+      if (problem.id !== id) {
+        return problem;
+      }
+
+      const revisionCount =
+        (problem.revisionCount || 0) + 1;
+
+      const intervals = [1, 3, 7, 14, 30];
+
+      const interval =
+        intervals[
+          Math.min(
+            revisionCount - 1,
+            intervals.length - 1
+          )
+        ];
+
+      return {
+        ...problem,
+        revisionCount,
+        revisionStatus: "Needs Revision",
+        nextRevisionDate: addDays(
+          today,
+          interval
+        ),
+      };
+    })
+  );
+}
   const totalProblems = problems.length;
 
   const solvedProblems = problems.filter(
@@ -112,11 +172,36 @@ setNotes("");
   const todayProblems = problems.filter(
   (problem) => !problem.solved
 );
- 
+const revisionProblems = problems.filter(
+  (problem) => isRevisionDue(problem)
+);
 
+const masteredProblems = problems.filter(
+  (problem) => problem.revisionStatus === "Mastered"
+).length;
 
+const dueRevisionCount = revisionProblems.length;
+
+const easyProblems = problems.filter(
+  (problem) => problem.difficulty === "Easy"
+).length;
+
+const mediumProblems = problems.filter(
+  (problem) => problem.difficulty === "Medium"
+).length;
+
+const hardProblems = problems.filter(
+  (problem) => problem.difficulty === "Hard"
+).length;
 
   const filteredProblems = problems.filter((problem) => {
+
+  if (
+    revisionFilter !== "All" &&
+    (problem.revisionStatus || "Not Started") !== revisionFilter
+  ) {
+    return false;
+  }
 
   if (filter === "Solved") {
     return problem.solved;
@@ -139,7 +224,7 @@ setNotes("");
 
   const topics = [...new Set(problems.map((problem) => problem.topic))];
 
-  function getTopicProgress(topic) {
+  const topicProgress = topics.map((topic) => {
     const topicProblems = problems.filter(
       (problem) => problem.topic === topic
     );
@@ -148,17 +233,20 @@ setNotes("");
       (problem) => problem.solved
     ).length;
 
+    const total = topicProblems.length;
+
     const percentage =
-      topicProblems.length === 0
+      total === 0
         ? 0
-        : Math.round((solved / topicProblems.length) * 100);
+        : Math.round((solved / total) * 100);
 
     return {
-      total: topicProblems.length,
+      topic,
+      total,
       solved,
       percentage,
     };
-  }
+  });
 
   return (
     <main className="dashboard">
@@ -269,44 +357,239 @@ setNotes("");
         </div>
 
       </div>
-    <div className="topic-progress">
 
-  <h3>Topic Progress</h3>
+      <div className="dsa-summary">
 
-  {topics.map((topic) => {
-
-    const progress = getTopicProgress(topic);
-
-    return (
-      <div className="topic-row" key={topic}>
-
-        <div className="topic-info">
-
-          <span>{topic}</span>
-
-          <span>
-            {progress.solved} / {progress.total}
-          </span>
-
+        <div className="dsa-summary-card">
+          <span>Total Problems</span>
+          <strong>{totalProblems}</strong>
         </div>
 
-        <div className="progress-bar">
+        <div className="dsa-summary-card">
+          <span>Solved</span>
+          <strong>{solvedProblems}</strong>
+        </div>
 
-          <div
-            className="progress-fill"
-            style={{
-              width: `${progress.percentage}%`,
-            }}
-          ></div>
+        <div className="dsa-summary-card">
+          <span>Due Today</span>
+          <strong>{dueRevisionCount}</strong>
+        </div>
+
+        <div className="dsa-summary-card">
+          <span>Mastered</span>
+          <strong>{masteredProblems}</strong>
+        </div>
+
+      </div>
+
+      <div className="difficulty-section">
+
+        <div className="section-heading">
+          <h3>Difficulty Breakdown</h3>
+
+          <p>
+            See how your problem set is distributed.
+          </p>
+        </div>
+
+        <div className="difficulty-grid">
+
+          <div className="difficulty-card">
+            <span>Easy</span>
+            <strong>{easyProblems}</strong>
+          </div>
+
+          <div className="difficulty-card">
+            <span>Medium</span>
+            <strong>{mediumProblems}</strong>
+          </div>
+
+          <div className="difficulty-card">
+            <span>Hard</span>
+            <strong>{hardProblems}</strong>
+          </div>
 
         </div>
 
       </div>
-    );
 
-  })}
+    <div className="topic-progress">
+      <h3>Topic Progress</h3>
 
-</div>
+      <div className="topic-progress-list">
+        {topicProgress.map((item) => (
+          <div
+            className="topic-progress-item"
+            key={item.topic}
+          >
+            <div className="topic-progress-header">
+              <span>
+                {item.topic}
+              </span>
+              <span>
+                {item.solved}/{item.total}
+              </span>
+            </div>
+
+            <div className="progress-bar">
+              <div
+                className="progress-bar-fill"
+                style={{
+                  width: `${item.percentage}%`,
+                }}
+              />
+            </div>
+
+            <small>
+              {item.percentage}% complete
+            </small>
+          </div>
+        ))}
+      </div>
+    </div>
+
+      <section className="revision-today">
+
+        <div className="section-heading">
+          <h3>Revision Due Today</h3>
+          <p>
+            Problems that are ready for revision now.
+          </p>
+        </div>
+
+        {revisionProblems.length === 0 ? (
+          <p className="empty-message">
+            No revisions due today. Good.
+          </p>
+        ) : (
+          <div className="revision-today-list">
+
+            {revisionProblems.slice(0, 5).map((problem) => (
+              <div
+                className="revision-today-item"
+                key={problem.id}
+              >
+                <div>
+                  <h4>{problem.title}</h4>
+
+                  <div className="task-details">
+                    <span>{problem.topic}</span>
+                    <span>{problem.difficulty}</span>
+                    <span>
+                      Revisions: {problem.revisionCount || 0}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => reviseProblem(problem.id)}
+                >
+                  Revise
+                </button>
+              </div>
+            ))}
+
+          </div>
+        )}
+
+      </section>
+
+      <div className="revision-queue">
+
+        <div className="revision-queue-header">
+
+          <div>
+            <h3>Revision Queue</h3>
+
+            <p>
+              Problems you should revise again.
+            </p>
+          </div>
+
+          <span className="today-count">
+            {revisionProblems.length} pending
+          </span>
+
+        </div>
+
+        {revisionProblems.length === 0 ? (
+
+          <p className="empty-message">
+            No problems need revision.
+          </p>
+
+        ) : (
+
+          <div className="revision-list">
+
+            {revisionProblems
+              .slice(0, 5)
+              .map((problem) => (
+
+                <div
+                  className="revision-item"
+                  key={problem.id}
+                >
+
+                  <div>
+
+                    <h4>
+                      {problem.title}
+                    </h4>
+
+                    <div className="task-details">
+                      <span>{problem.topic}</span>
+                      <span>{problem.difficulty}</span>
+                      <span>{problem.platform}</span>
+                    </div>
+
+                    <div className="revision-info">
+
+                      <p className="revision-count">
+                        Revisions: {problem.revisionCount || 0}
+                      </p>
+
+                      {problem.nextRevisionDate && (
+                        <p className="revision-date">
+                          Next revision: {problem.nextRevisionDate}
+                        </p>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => reviseProblem(problem.id)}
+                    >
+                      Revise
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateRevisionStatus(
+                          problem.id,
+                          "Mastered"
+                        )
+                      }
+                    >
+                      Mastered
+                    </button>
+                  </div>
+
+                </div>
+
+              ))}
+
+          </div>
+
+        )}
+
+      </div>
 
       <div className="today-dsa">
 
@@ -414,6 +697,39 @@ setNotes("");
     Hard
   </button>
 
+  <button
+    onClick={() => setRevisionFilter("All")}
+    className={
+      revisionFilter === "All"
+        ? "active-filter"
+        : ""
+    }
+  >
+    All Revision
+  </button>
+
+  <button
+    onClick={() => setRevisionFilter("Needs Revision")}
+    className={
+      revisionFilter === "Needs Revision"
+        ? "active-filter"
+        : ""
+    }
+  >
+    Needs Revision
+  </button>
+
+  <button
+    onClick={() => setRevisionFilter("Mastered")}
+    className={
+      revisionFilter === "Mastered"
+        ? "active-filter"
+        : ""
+    }
+  >
+    Mastered
+  </button>
+
 </div>
       <div className="dsa-list">
 
@@ -469,6 +785,34 @@ setNotes("");
                     Open Problem →
                   </a>
                 )}
+
+                <div className="revision-control">
+                  <label>
+                    Revision
+                  </label>
+                  <select
+                    value={
+                      problem.revisionStatus ||
+                      "Not Started"
+                    }
+                    onChange={(event) =>
+                      updateRevisionStatus(
+                        problem.id,
+                        event.target.value
+                      )
+                    }
+                  >
+                    <option value="Not Started">
+                      Not Started
+                    </option>
+                    <option value="Needs Revision">
+                      Needs Revision
+                    </option>
+                    <option value="Mastered">
+                      Mastered
+                    </option>
+                  </select>
+                </div>
 
               </div>
 

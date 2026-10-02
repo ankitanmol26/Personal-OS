@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getStorage } from "../utils/storage";
+import { isOverdue, isRevisionDue } from "../utils/date";
 
 function useDashboardData() {
   const [tasks, setTasks] = useState([]);
@@ -47,6 +48,9 @@ function useDashboardData() {
   const pendingTasks = tasks.filter(
     (task) => !task.completed
   );
+  const overdueTasks = tasks.filter(
+  (task) => isOverdue(task)
+);
 
   const solvedProblems = dsaProblems.filter(
     (problem) => problem.solved
@@ -65,6 +69,15 @@ function useDashboardData() {
             100
         );
 
+  const dsaDueToday = dsaProblems.filter(
+    (problem) => isRevisionDue(problem)
+  );
+
+  const dsaMastered = dsaProblems.filter(
+    (problem) =>
+      problem.revisionStatus === "Mastered"
+  );
+
   return {
     tasks,
     dsaProblems,
@@ -73,10 +86,17 @@ function useDashboardData() {
     pendingTasks,
     pendingTaskCount: pendingTasks.length,
 
+    overdueTasks,
+    overdueTaskCount: overdueTasks.length,
+
     dsaTotal: dsaProblems.length,
     dsaSolved: solvedProblems.length,
     unsolvedProblems,
     dsaProgress,
+
+    dsaDueToday,
+    dsaDueTodayCount: dsaDueToday.length,
+    dsaMasteredCount: dsaMastered.length,
 
     projectCount,
     noteCount,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isOverdue } from "../utils/date";
 import {
   getStorage,
   setStorage,
@@ -24,6 +25,7 @@ function Tasks() {
   }, [tasks]);
   const [filter, setFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
 
   const [taskText, setTaskText] = useState("");
   const [category, setCategory] = useState("General");
@@ -108,7 +110,11 @@ function Tasks() {
       matchesStatus = task.priority === "High" && !task.completed;
     }
 
-    return matchesStatus && matchesCategory;
+    const matchesPriority =
+      priorityFilter === "All" ||
+      task.priority === priorityFilter;
+
+    return matchesStatus && matchesCategory && matchesPriority;
   });
 const sortedTasks = [...filteredTasks].sort(
   (a, b) => {
@@ -138,26 +144,33 @@ const sortedTasks = [...filteredTasks].sort(
 
     return 0;
   }
-);
+  );
+
+  const totalTasks = tasks.length;
+
+  const completedTasks = tasks.filter(
+    (task) => task.completed
+  ).length;
+
+  const pendingTaskCount =
+    totalTasks - completedTasks;
+
+  const highPriorityCount = tasks.filter(
+    (task) =>
+      !task.completed &&
+      task.priority === "High"
+  ).length;
+
+  const overdueCount = tasks.filter(
+    (task) => isOverdue(task)
+  ).length;
 
   function deleteTask(id) {
     setTasks(
       tasks.filter((task) => task.id !== id)
     );
   }
-  const totalTasks = tasks.length;
 
-const completedTasks = tasks.filter(
-  (task) => task.completed
-).length;
-
-const pendingTasks = tasks.filter(
-  (task) => !task.completed
-).length;
-
-const highPriorityTasks = tasks.filter(
-  (task) => task.priority === "High" && !task.completed
-).length;
 
   return (
     <main className="dashboard">
@@ -167,29 +180,6 @@ const highPriorityTasks = tasks.filter(
       <p className="page-description">
         Manage everything you need to do.
       </p>
-      <div className="task-stats">
-
-  <div className="stat-card">
-    <h3>{totalTasks}</h3>
-    <p>Total</p>
-  </div>
-
-  <div className="stat-card">
-    <h3>{completedTasks}</h3>
-    <p>Completed</p>
-  </div>
-
-  <div className="stat-card">
-    <h3>{pendingTasks}</h3>
-    <p>Pending</p>
-  </div>
-
-  <div className="stat-card">
-    <h3>{highPriorityTasks}</h3>
-    <p>High Priority</p>
-  </div>
-
-</div>
 
       <form className="task-form" onSubmit={addTask}>
 
@@ -252,6 +242,29 @@ const highPriorityTasks = tasks.filter(
         )}
 
       </form>
+      <div className="task-summary">
+        <div className="task-summary-card">
+          <span>Total</span>
+          <strong>{totalTasks}</strong>
+        </div>
+        <div className="task-summary-card">
+          <span>Pending</span>
+          <strong>{pendingTaskCount}</strong>
+        </div>
+        <div className="task-summary-card">
+          <span>Completed</span>
+          <strong>{completedTasks}</strong>
+        </div>
+        <div className="task-summary-card">
+          <span>High Priority</span>
+          <strong>{highPriorityCount}</strong>
+        </div>
+        <div className="task-summary-card">
+          <span>Overdue</span>
+          <strong>{overdueCount}</strong>
+        </div>
+      </div>
+
       <div className="task-filters">
 
   <button
@@ -283,22 +296,39 @@ const highPriorityTasks = tasks.filter(
   </button>
 
 </div>
-      <div className="task-filter">
-        <label htmlFor="category-filter">
-          Category
-        </label>
-        <select
-          id="category-filter"
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
-        >
-          <option value="All">All</option>
-          {TASK_CATEGORIES.map((taskCategory) => (
-            <option key={taskCategory} value={taskCategory}>
-              {taskCategory}
-            </option>
-          ))}
-        </select>
+      <div className="task-filters">
+        <div className="task-filter">
+          <label htmlFor="category-filter">
+            Category
+          </label>
+          <select
+            id="category-filter"
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+          >
+            <option value="All">All</option>
+            {TASK_CATEGORIES.map((taskCategory) => (
+              <option key={taskCategory} value={taskCategory}>
+                {taskCategory}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="task-filter">
+          <label htmlFor="priority-filter">
+            Priority
+          </label>
+          <select
+            id="priority-filter"
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+          >
+            <option value="All">All</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
       </div>
       <div className="task-list">
 
@@ -311,14 +341,7 @@ const highPriorityTasks = tasks.filter(
         ) : (
 
           sortedTasks.map((task) => {
-            const today = new Date()
-              .toISOString()
-              .split("T")[0];
-
-            const isOverdue =
-              task.dueDate &&
-              task.dueDate < today &&
-              !task.completed;
+            const overdue = isOverdue(task);
 
             return (
 
@@ -355,14 +378,10 @@ const highPriorityTasks = tasks.filter(
                     </span>
 
                     {task.dueDate && (
-                      <span>
-                        Due: {task.dueDate}
-
-                        {isOverdue && (
-                          <span className="overdue-label">
-                            Overdue
-                          </span>
-                        )}
+                      <span className={overdue ? "task-overdue" : ""}>
+                        {overdue
+                          ? `Overdue • ${task.dueDate}`
+                          : `Due • ${task.dueDate}`}
                       </span>
                     )}
 
