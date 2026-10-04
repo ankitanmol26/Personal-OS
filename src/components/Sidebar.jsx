@@ -1,72 +1,50 @@
 import { NavLink } from "react-router-dom";
+import { Search, Bell } from "lucide-react";
 
 function Sidebar() {
-  return (
-    <aside className="sidebar">
+  const getNavClass = ({ isActive }) =>
+    isActive ? "top-nav-link active" : "top-nav-link";
 
-      <div className="logo">
-        PersonalOS
+  return (
+    <nav className="top-nav">
+      <div className="top-nav-left">
+        <div className="logo-icon-green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <span className="logo-text-white">PersonalOS</span>
       </div>
 
-      <nav>
-
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          Dashboard
+      <div className="top-nav-center">
+        <NavLink to="/" className={getNavClass}>
+          <span>Dashboard</span>
         </NavLink>
-
-        <NavLink
-          to="/tasks"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          Tasks
+        <NavLink to="/planner" className={getNavClass}>
+          <span>Planner</span>
         </NavLink>
-
-        <NavLink
-          to="/planner"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          Planner
+        <NavLink to="/tasks" className={getNavClass}>
+          <span>Tasks</span>
         </NavLink>
-
-        <NavLink
-          to="/dsa"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          DSA Tracker
+        <NavLink to="/dsa" className={getNavClass}>
+          <span>DSA</span>
         </NavLink>
-
-        <NavLink
-          to="/projects"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          Projects
+        <NavLink to="/notes" className={getNavClass}>
+          <span>Notes</span>
         </NavLink>
-
-        <NavLink
-          to="/notes"
-          className={({ isActive }) =>
-            isActive ? "active-link" : ""
-          }
-        >
-          Notes
+        <NavLink to="/projects" className={getNavClass}>
+          <span>Projects</span>
         </NavLink>
+      </div>
 
-      </nav>
-
-    </aside>
+      <div className="top-nav-right">
+        <button className="icon-btn-dark"><Search size={18} /></button>
+        <button className="icon-btn-dark relative">
+          <Bell size={18} />
+          <span className="notification-dot"></span>
+        </button>
+      </div>
+    </nav>
   );
 }
 

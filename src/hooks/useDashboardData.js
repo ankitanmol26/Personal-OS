@@ -7,6 +7,7 @@ function useDashboardData() {
   const [dsaProblems, setDsaProblems] = useState([]);
   const [projectCount, setProjectCount] = useState(0);
   const [noteCount, setNoteCount] = useState(0);
+  const [plannerTasks, setPlannerTasks] = useState([]);
 
   function loadData() {
     const storedTasks = getStorage("tasks");
@@ -23,10 +24,15 @@ function useDashboardData() {
       "notes"
     );
 
+    const storedPlannerTasks = getStorage(
+      "plannerTasks"
+    );
+
     setTasks(storedTasks);
     setDsaProblems(storedDsaProblems);
     setProjectCount(storedProjects.length);
     setNoteCount(storedNotes.length);
+    setPlannerTasks(storedPlannerTasks);
   }
 
   useEffect(() => {
@@ -77,8 +83,6 @@ function useDashboardData() {
     (problem) =>
       problem.revisionStatus === "Mastered"
   );
-
-  const plannerTasks = getStorage("plannerTasks");
 
   const today = new Date()
     .toISOString()

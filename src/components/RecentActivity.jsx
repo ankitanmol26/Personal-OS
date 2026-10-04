@@ -1,3 +1,6 @@
+import { CheckCircle2, Code } from "lucide-react";
+import { motion } from "framer-motion";
+
 function RecentActivity({ tasks, dsaProblems }) {
   const activities = [];
 
@@ -28,51 +31,41 @@ function RecentActivity({ tasks, dsaProblems }) {
   const recentActivities = activities.slice(-6).reverse();
 
   return (
-    <section className="recent-activity">
-
+    <section className="recent-activity card">
       <div className="section-heading">
         <h3>Recent Activity</h3>
-
-        <p>
-          A quick look at your recent progress.
-        </p>
+        <p>A quick look at your recent progress.</p>
       </div>
 
       {recentActivities.length === 0 ? (
-        <p className="focus-empty">
-          No activity yet. Start working and your
-          progress will appear here.
-        </p>
+        <div className="empty-state">
+          <p>No activity yet. Start working and your progress will appear here.</p>
+        </div>
       ) : (
         <ul className="activity-list">
-
-          {recentActivities.map((activity) => (
-            <li key={activity.id}>
-
+          {recentActivities.map((activity, index) => (
+            <motion.li 
+              key={activity.id}
+              className="activity-item"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+            >
               <div className="activity-icon">
-                {activity.type === "DSA"
-                  ? "D"
-                  : "T"}
+                {activity.type === "DSA" ? (
+                  <Code size={16} className="text-info" />
+                ) : (
+                  <CheckCircle2 size={16} className="text-success" />
+                )}
               </div>
-
               <div className="activity-content">
-
-                <strong>
-                  {activity.title}
-                </strong>
-
-                <span>
-                  {activity.type}
-                </span>
-
+                <strong>{activity.title}</strong>
+                <span>{activity.type}</span>
               </div>
-
-            </li>
+            </motion.li>
           ))}
-
         </ul>
       )}
-
     </section>
   );
 }

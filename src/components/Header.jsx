@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
+import { Settings } from "lucide-react";
 
 function Header() {
-  const [currentTime, setCurrentTime] = useState(
-    new Date()
-  );
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -27,31 +26,30 @@ function Header() {
     greeting = "Good evening";
   }
 
-  const formattedDate =
-    currentTime.toLocaleDateString("en-IN", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+  const formattedDate = currentTime.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <header className="header">
-
-      <div>
+      <div className="header-greeting">
         <h1>
           {greeting}, Anmol
         </h1>
-
         <p>
           {formattedDate}
         </p>
       </div>
 
-      <div className="profile">
-        A
+      <div className="header-actions">
+        <button className="icon-button" aria-label="Settings">
+          <Settings size={18} />
+        </button>
+        <div className="profile">A</div>
       </div>
-
     </header>
   );
 }
