@@ -20,6 +20,10 @@ function Dashboard() {
     dsaMasteredCount,
     projectCount,
     noteCount,
+    plannerTodayCount,
+    plannerCompletedTodayCount,
+    plannerRemainingTodayCount,
+    plannerOverdueCount,
   } = useDashboardData();
 
   return (
@@ -69,6 +73,51 @@ function Dashboard() {
 />
 
       </div>
+
+      <section className="dashboard-planner">
+
+        <div className="section-heading">
+          <h3>Today's Plan</h3>
+
+          <p>
+            Your current daily workload.
+          </p>
+        </div>
+
+        <div className="dashboard-planner-stats">
+
+          <div>
+            <span>Today's Tasks</span>
+            <strong>
+              {plannerTodayCount}
+            </strong>
+          </div>
+
+          <div>
+            <span>Completed</span>
+            <strong>
+              {plannerCompletedTodayCount}
+            </strong>
+          </div>
+
+          <div>
+            <span>Remaining</span>
+            <strong>
+              {plannerRemainingTodayCount}
+            </strong>
+          </div>
+
+          <div>
+            <span>Overdue</span>
+            <strong>
+              {plannerOverdueCount}
+            </strong>
+          </div>
+
+        </div>
+
+      </section>
+
       <DSAProgress
         solved={dsaSolved}
         total={dsaTotal}

@@ -29,6 +29,15 @@ function Sidebar() {
         </NavLink>
 
         <NavLink
+          to="/planner"
+          className={({ isActive }) =>
+            isActive ? "active-link" : ""
+          }
+        >
+          Planner
+        </NavLink>
+
+        <NavLink
           to="/dsa"
           className={({ isActive }) =>
             isActive ? "active-link" : ""

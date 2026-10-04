@@ -8,6 +8,7 @@ import Tasks from "./pages/Tasks";
 import DSA from "./pages/DSA";
 import Projects from "./pages/Projects";
 import Notes from "./pages/Notes";
+import Planner from "./pages/Planner";
 
 import "./App.css";
 
@@ -28,6 +29,8 @@ function App() {
             <Route path="/" element={<Dashboard />} />
 
             <Route path="/tasks" element={<Tasks />} />
+
+            <Route path="/planner" element={<Planner />} />
 
             <Route path="/dsa" element={<DSA />} />
 

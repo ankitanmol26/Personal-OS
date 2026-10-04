@@ -1496,3 +1496,139 @@
     grid-template-columns: 1fr;
   }
 }
+
+.planner-summary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.planner-summary-card {
+  padding: 18px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.planner-summary-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.planner-summary-card strong {
+  font-size: 26px;
+}
+
+.planner-progress {
+  margin-bottom: 28px;
+  padding: 20px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.planner-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.planner-section {
+  padding: 24px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.planner-task-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.planner-task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.planner-task:last-child {
+  border-bottom: none;
+}
+
+.planner-task-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.planner-task-main small {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.planner-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .planner-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-form {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-task {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.dashboard-planner {
+  margin-top: 24px;
+  padding: 24px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.dashboard-planner-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.dashboard-planner-stats div {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.dashboard-planner-stats span {
+  display: block;
+  margin-bottom: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dashboard-planner-stats strong {
+  font-size: 26px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-planner-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

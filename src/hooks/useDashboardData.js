@@ -78,7 +78,38 @@ function useDashboardData() {
       problem.revisionStatus === "Mastered"
   );
 
+  const plannerTasks = getStorage("plannerTasks");
+
+  const today = new Date()
+    .toISOString()
+    .split("T")[0];
+
+  const plannerTodayTasks = plannerTasks.filter(
+    (task) => task.date === today
+  );
+
+  const plannerCompletedToday =
+    plannerTodayTasks.filter(
+      (task) => task.completed
+    );
+
+  const plannerOverdueTasks =
+    plannerTasks.filter(
+      (task) =>
+        task.date < today &&
+        !task.completed
+    );
+
   return {
+    plannerTodayTasks,
+    plannerTodayCount: plannerTodayTasks.length,
+    plannerCompletedTodayCount:
+      plannerCompletedToday.length,
+    plannerRemainingTodayCount:
+      plannerTodayTasks.length -
+      plannerCompletedToday.length,
+    plannerOverdueCount:
+      plannerOverdueTasks.length,
     tasks,
     dsaProblems,
 
