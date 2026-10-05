@@ -3,6 +3,7 @@ import { isOverdue } from "../utils/date";
 import { getStorage, setStorage } from "../utils/storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Calendar, CheckCircle, Circle, Edit3, Folder, AlertCircle } from "lucide-react";
+import "./Tasks.css";
 
 const TASK_CATEGORIES = [
   "General",
@@ -14,13 +15,39 @@ const TASK_CATEGORIES = [
   "Personal",
 ];
 
-function getPriorityBadge(priority) {
+function getPriorityClass(priority) {
   switch (priority) {
-    case "High": return "badge badge-danger";
-    case "Medium": return "badge badge-warning";
-    case "Low": return "badge badge-info";
-    default: return "badge";
+    case "High": return "task-priority high";
+    case "Medium": return "task-priority medium";
+    case "Low": return "task-priority low";
+    default: return "task-priority";
   }
+}
+
+function StatCard({ label, value, type, delay = 0 }) {
+  const indicatorColor = {
+    accent: "var(--accent-primary)",
+    info: "var(--status-info)",
+    success: "var(--status-success)",
+    warning: "var(--status-warning)",
+    danger: "var(--status-danger)",
+    neutral: "var(--text-muted)",
+  }[type] || "var(--text-muted)";
+
+  return (
+    <motion.div 
+      className="tasks-stat-card"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay * 0.04, ease: "easeOut" }}
+    >
+      <div className="tasks-stat-title">
+        {label}
+        <span className="tasks-stat-indicator" style={{ backgroundColor: indicatorColor }} />
+      </div>
+      <div className="tasks-stat-value">{value}</div>
+    </motion.div>
+  );
 }
 
 function Tasks() {
@@ -118,51 +145,60 @@ function Tasks() {
   const highPriorityCount = tasks.filter((task) => !task.completed && task.priority === "High").length;
   const overdueCount = tasks.filter((task) => isOverdue(task)).length;
 
-  const renderTask = (task) => {
+  const renderTask = (task, index) => {
     const overdue = isOverdue(task);
     return (
       <motion.div
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-        className={`planner-task card ${task.completed ? "task-completed" : ""}`}
+        exit={{ opacity: 0, scale: 0.95, height: 0, padding: 0, margin: 0, overflow: 'hidden', border: 'none' }}
+        transition={{ duration: 0.2, delay: index * 0.03 }}
+        className={`task-card ${task.completed ? "completed" : ""}`}
         key={task.id}
       >
-        <div className="planner-task-main">
-          <button 
-            className="task-checkbox" 
-            onClick={() => toggleTask(task.id)}
-          >
-            {task.completed ? <CheckCircle size={20} className="text-success" /> : <Circle size={20} className="text-muted" />}
-          </button>
+        <button 
+          className={`task-checkbox ${task.completed ? "checked" : ""}`} 
+          onClick={() => toggleTask(task.id)}
+          aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+        >
+          <AnimatePresence mode="wait">
+            {task.completed ? (
+              <motion.div key="check" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.15 }}>
+                <CheckCircle size={22} />
+              </motion.div>
+            ) : (
+              <motion.div key="circle" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.15 }}>
+                <Circle size={22} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </button>
 
-          <div className="task-content flex-1">
-            <span className={`task-title ${task.completed ? "muted-text strike-through" : ""}`}>
-              {task.text}
+        <div className="task-content">
+          <h3 className="task-title">
+            {task.text}
+          </h3>
+          <div className="task-meta">
+            <span className="task-meta-item">
+              <Folder size={14} /> {task.category || "General"}
             </span>
-            <div className="task-date muted-text flex items-center gap-xs" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <span className="flex items-center gap-xs" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Folder size={12} /> {task.category || "General"}
+            {task.dueDate && (
+              <span className={`task-meta-item ${overdue ? "overdue" : ""}`}>
+                {overdue ? <AlertCircle size={14} /> : <Calendar size={14} />}
+                {overdue ? "Overdue" : "Due"} {task.dueDate}
               </span>
-              {task.dueDate && (
-                <span className={`flex items-center gap-xs ${overdue ? "text-danger font-medium" : ""}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {overdue ? <AlertCircle size={12} /> : <Calendar size={12} />}
-                  {overdue ? "Overdue" : "Due"} {task.dueDate}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="planner-task-actions">
-          <span className={getPriorityBadge(task.priority)}>
+        <div className="task-actions">
+          <span className={getPriorityClass(task.priority)}>
             {task.priority}
           </span>
           <button
             type="button"
-            className="icon-button edit-button"
+            className="task-btn-icon edit"
             onClick={() => handleEditTask(task)}
             aria-label="Edit task"
           >
@@ -170,7 +206,7 @@ function Tasks() {
           </button>
           <button
             type="button"
-            className="icon-button delete-button"
+            className="task-btn-icon delete"
             onClick={() => deleteTask(task.id)}
             aria-label="Delete task"
           >
@@ -182,130 +218,124 @@ function Tasks() {
   };
 
   return (
-    <main className="dashboard">
-      <div className="dashboard-header">
+    <main className="tasks-page">
+      <div className="tasks-header">
         <h2>Tasks</h2>
-        <p className="page-description">Manage everything you need to do.</p>
+        <p>Manage everything you need to do.</p>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="stat-card">
-          <span className="stat-card-title">Total</span>
-          <strong className="stat-card-value">{totalTasks}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Pending</span>
-          <strong className="stat-card-value">{pendingTaskCount}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Completed</span>
-          <strong className="stat-card-value">{completedTasks}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">High Priority</span>
-          <strong className="stat-card-value">{highPriorityCount}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Overdue</span>
-          <strong className="stat-card-value">{overdueCount}</strong>
-        </div>
+      <div className="tasks-stats">
+        <StatCard label="Total" value={totalTasks} type="neutral" delay={0} />
+        <StatCard label="Pending" value={pendingTaskCount} type="info" delay={1} />
+        <StatCard label="Completed" value={completedTasks} type="success" delay={2} />
+        <StatCard label="High Priority" value={highPriorityCount} type="warning" delay={3} />
+        <StatCard label="Overdue" value={overdueCount} type={overdueCount > 0 ? "danger" : "neutral"} delay={4} />
       </div>
 
-      <form className="planner-form card" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end' }} onSubmit={addTask}>
-        <div className="form-group flex-1" style={{ minWidth: '200px' }}>
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Task Description</label>
-          <input
-            type="text"
-            className="input-field"
-            placeholder="What needs to be done?"
-            value={taskText}
-            onChange={(e) => setTaskText(e.target.value)}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Priority</label>
-          <select
-            className="input-field"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-        </div>
+      <AnimatePresence mode="wait">
+        <motion.form 
+          key={editingTaskId !== null ? "edit" : "add"}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.2 }}
+          className="tasks-form" 
+          onSubmit={addTask}
+        >
+          <h3 className="tasks-form-header">
+            {editingTaskId !== null ? "Editing Task" : "Add Task"}
+          </h3>
+          <div className="tasks-form-grid">
+            <div className="tasks-input-group desc">
+              <label className="tasks-input-label">Task Description</label>
+              <input
+                type="text"
+                className="tasks-input"
+                placeholder="What needs to be done?"
+                value={taskText}
+                onChange={(e) => setTaskText(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="tasks-input-group pri">
+              <label className="tasks-input-label">Priority</label>
+              <select
+                className="tasks-input"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
 
-        <div className="form-group">
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Category</label>
-          <select
-            className="input-field"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {TASK_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+            <div className="tasks-input-group cat">
+              <label className="tasks-input-label">Category</label>
+              <select
+                className="tasks-input"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                {TASK_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="tasks-input-group date">
+              <label className="tasks-input-label">Due Date</label>
+              <input
+                type="date"
+                className="tasks-input"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
+            <div className="tasks-input-group btns">
+              {editingTaskId !== null && (
+                <button
+                  type="button"
+                  className="tasks-btn-secondary"
+                  onClick={() => {
+                    setEditingTaskId(null);
+                    setTaskText("");
+                    setCategory("General");
+                    setPriority("Medium");
+                    setDueDate("");
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+              <button type="submit" className="tasks-btn-primary">
+                {editingTaskId !== null ? "Update Task" : "Add Task →"}
+              </button>
+            </div>
+          </div>
+        </motion.form>
+      </AnimatePresence>
+
+      <div className="tasks-filters-section">
+        <div className="tasks-filters-bar">
+          <div className="tasks-filter-group">
+            {["All", "Pending", "Completed", "High Priority"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`tasks-filter-pill ${filter === f ? 'active' : ''}`}
+                type="button"
+              >
+                {f}
+              </button>
             ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Due Date</label>
-          <input
-            type="date"
-            className="input-field"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
-          <button type="submit" className="btn-primary">
-            {editingTaskId !== null ? "Update Task" : "Add Task"}
-          </button>
+          </div>
           
-          {editingTaskId !== null && (
-            <button
-              type="button"
-              className="btn-primary"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-              onClick={() => {
-                setEditingTaskId(null);
-                setTaskText("");
-                setCategory("General");
-                setPriority("Medium");
-                setDueDate("");
-              }}
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-
-      <div className="planner-section card" style={{ padding: '24px' }}>
-        <div className="task-filters" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          {["All", "Pending", "Completed", "High Priority"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="badge"
-              style={{ 
-                cursor: 'pointer', 
-                padding: '6px 12px',
-                border: 'none',
-                backgroundColor: filter === f ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                color: filter === f ? '#fff' : 'var(--text-secondary)'
-              }}
-            >
-              {f}
-            </button>
-          ))}
-          
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+          <div className="tasks-filter-group">
             <select
-              className="input-field"
-              style={{ width: '140px', padding: '6px 10px', height: '100%' }}
+              className="tasks-filter-select"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
@@ -314,8 +344,7 @@ function Tasks() {
             </select>
 
             <select
-              className="input-field"
-              style={{ width: '130px', padding: '6px 10px', height: '100%' }}
+              className="tasks-filter-select"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
             >
@@ -328,17 +357,19 @@ function Tasks() {
         </div>
 
         {tasks.length === 0 ? (
-          <div className="empty-state">
-            <p>No tasks yet. Add your first task above.</p>
+          <div className="tasks-empty">
+            <span className="tasks-empty-title">No tasks yet</span>
+            <span className="tasks-empty-desc">Add your first task above and start organizing your workload.</span>
           </div>
         ) : sortedTasks.length === 0 ? (
-          <div className="empty-state">
-            <p>No tasks match your filters.</p>
+          <div className="tasks-empty">
+            <span className="tasks-empty-title">No matching tasks</span>
+            <span className="tasks-empty-desc">Try changing your filters.</span>
           </div>
         ) : (
-          <div className="planner-task-list" style={{ marginTop: '0' }}>
-            <AnimatePresence>
-              {sortedTasks.map(renderTask)}
+          <div className="tasks-list">
+            <AnimatePresence mode="popLayout">
+              {sortedTasks.map((task, i) => renderTask(task, i))}
             </AnimatePresence>
           </div>
         )}

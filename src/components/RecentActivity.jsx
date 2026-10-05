@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 function RecentActivity({ tasks, dsaProblems }) {
   const activities = [];
 
-  // Completed tasks
   tasks
     .filter((task) => task.completed)
     .slice(-3)
@@ -12,11 +11,13 @@ function RecentActivity({ tasks, dsaProblems }) {
       activities.push({
         id: `task-${task.id}`,
         type: "Task",
-        title: `Completed: ${task.text}`,
+        title: task.text,
+        desc: "Completed task",
+        date: task.completedAt || "Recent",
+        icon: <CheckCircle2 size={16} />
       });
     });
 
-  // Solved DSA problems
   dsaProblems
     .filter((problem) => problem.solved)
     .slice(-3)
@@ -24,43 +25,42 @@ function RecentActivity({ tasks, dsaProblems }) {
       activities.push({
         id: `dsa-${problem.id}`,
         type: "DSA",
-        title: `Solved: ${problem.title}`,
+        title: problem.title,
+        desc: "Solved problem",
+        date: "Recent",
+        icon: <Code size={16} />
       });
     });
 
-  const recentActivities = activities.slice(-6).reverse();
+  const recentActivities = activities.slice(-4).reverse();
 
   return (
-    <section className="recent-activity card">
-      <div className="section-heading">
+    <section className="hero-card">
+      <div className="hero-header">
         <h3>Recent Activity</h3>
-        <p>A quick look at your recent progress.</p>
+        <p>A quick look at your latest actions.</p>
       </div>
 
       {recentActivities.length === 0 ? (
-        <div className="empty-state">
-          <p>No activity yet. Start working and your progress will appear here.</p>
+        <div className="empty-state" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+          <p>No activity yet.</p>
         </div>
       ) : (
-        <ul className="activity-list">
+        <ul className="activity-feed">
           {recentActivities.map((activity, index) => (
             <motion.li 
               key={activity.id}
-              className="activity-item"
+              className="activity-feed-item"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2, delay: index * 0.05 }}
             >
-              <div className="activity-icon">
-                {activity.type === "DSA" ? (
-                  <Code size={16} className="text-info" />
-                ) : (
-                  <CheckCircle2 size={16} className="text-success" />
-                )}
+              <div className="activity-feed-icon">
+                {activity.icon}
               </div>
-              <div className="activity-content">
-                <strong>{activity.title}</strong>
-                <span>{activity.type}</span>
+              <div className="activity-feed-content">
+                <strong className="activity-feed-desc">{activity.desc}: {activity.title}</strong>
+                <span className="activity-feed-time">{activity.date}</span>
               </div>
             </motion.li>
           ))}

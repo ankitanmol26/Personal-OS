@@ -2,23 +2,49 @@ import { useEffect, useState } from "react";
 import { getStorage, setStorage } from "../utils/storage";
 import { getTodayDate, addDays, isRevisionDue } from "../utils/date";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, CheckCircle, Circle, BookOpen, Clock, Activity, Target } from "lucide-react";
+import { ExternalLink, CheckCircle, Circle, BookOpen, Activity, Target, Trash2, Hash } from "lucide-react";
+import "../styles/DSA.css";
 
-function getDifficultyBadge(diff) {
+function getDifficultyClass(diff) {
   switch (diff) {
-    case "Easy": return "badge badge-success";
-    case "Medium": return "badge badge-warning";
-    case "Hard": return "badge badge-danger";
-    default: return "badge";
+    case "Easy": return "dsa-badge easy";
+    case "Medium": return "dsa-badge medium";
+    case "Hard": return "dsa-badge hard";
+    default: return "dsa-badge";
   }
 }
 
-function getRevisionBadge(status) {
+function getRevisionClass(status) {
   switch (status) {
-    case "Mastered": return "badge badge-success";
-    case "Needs Revision": return "badge badge-warning";
-    default: return "badge badge-info";
+    case "Mastered": return "dsa-badge rev-mastered";
+    case "Needs Revision": return "dsa-badge rev-needs";
+    default: return "dsa-badge rev-not";
   }
+}
+
+function StatCard({ label, value, type, delay = 0 }) {
+  const indicatorColor = {
+    accent: "var(--accent-primary)",
+    info: "var(--status-info)",
+    success: "var(--status-success)",
+    warning: "var(--status-warning)",
+    neutral: "var(--text-muted)",
+  }[type] || "var(--text-muted)";
+
+  return (
+    <motion.div 
+      className="dsa-kpi-card"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay * 0.04, ease: "easeOut" }}
+    >
+      <div className="dsa-kpi-title">
+        {label}
+        <span className="dsa-kpi-indicator" style={{ backgroundColor: indicatorColor }} />
+      </div>
+      <div className="dsa-kpi-value">{value}</div>
+    </motion.div>
+  );
 }
 
 function DSA() {
@@ -34,7 +60,7 @@ function DSA() {
 
   const defaultProblems = [
     {
-      id: 1, title: "Two Sum", topic: "Arrays", difficulty: "Easy", platform: "LeetCode",
+      id: 1, title: "Two Sum", topic: "Arrays", difficulty: "Easy", platform: "LeetCode", problemLink: "https://leetcode.com/problems/two-sum/",
       solved: true, revisionStatus: "Needs Revision",
     },
     {
@@ -78,6 +104,10 @@ function DSA() {
   function toggleSolved(id) {
     setProblems(problems.map((problem) => problem.id === id ? { ...problem, solved: !problem.solved } : problem));
   }
+  
+  function deleteProblem(id) {
+    setProblems(problems.filter((problem) => problem.id !== id));
+  }
 
   function updateRevisionStatus(id, status) {
     setProblems(problems.map((problem) => problem.id === id ? { ...problem, revisionStatus: status } : problem));
@@ -107,9 +137,7 @@ function DSA() {
   const masteredProblems = problems.filter((problem) => problem.revisionStatus === "Mastered").length;
   const dueRevisionCount = revisionProblems.length;
   
-  const easyProblems = problems.filter((problem) => problem.difficulty === "Easy").length;
-  const mediumProblems = problems.filter((problem) => problem.difficulty === "Medium").length;
-  const hardProblems = problems.filter((problem) => problem.difficulty === "Hard").length;
+  const overallProgress = totalProblems === 0 ? 0 : Math.round((solvedProblems / totalProblems) * 100);
 
   const filteredProblems = problems.filter((problem) => {
     if (revisionFilter !== "All" && (problem.revisionStatus || "Not Started") !== revisionFilter) return false;
@@ -119,68 +147,63 @@ function DSA() {
     return true;
   });
 
-  const topics = [...new Set(problems.map((problem) => problem.topic))];
-  const topicProgress = topics.map((topic) => {
-    const topicProblems = problems.filter((p) => p.topic === topic);
-    const solved = topicProblems.filter((p) => p.solved).length;
-    const total = topicProblems.length;
-    return { topic, total, solved, percentage: total === 0 ? 0 : Math.round((solved / total) * 100) };
-  });
-
   return (
-    <main className="dashboard">
-      <div className="dashboard-header">
+    <main className="dsa-page">
+      <div className="dsa-header">
         <h2>DSA Tracker</h2>
-        <p className="page-description">Track your Data Structures and Algorithms progress.</p>
+        <p>Build consistency. Solve problems. Review what you've learned.</p>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="stat-card">
-          <span className="stat-card-title">Total Problems</span>
-          <strong className="stat-card-value">{totalProblems}</strong>
+      <div className="dsa-kpi-grid">
+        <StatCard label="Total Problems" value={totalProblems} type="neutral" delay={0} />
+        <StatCard label="Solved" value={solvedProblems} type="success" delay={1} />
+        <StatCard label="Remaining" value={pendingProblems} type="neutral" delay={2} />
+        <StatCard label="Due for Revision" value={dueRevisionCount} type={dueRevisionCount > 0 ? "warning" : "neutral"} delay={3} />
+        <StatCard label="Mastered" value={masteredProblems} type="info" delay={4} />
+      </div>
+
+      <div className="dsa-progress-card">
+        <div className="dsa-progress-header">
+          <span className="dsa-progress-title">Overall Progress</span>
+          <span className="dsa-progress-value">{overallProgress}%</span>
         </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Solved</span>
-          <strong className="stat-card-value">{solvedProblems}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Pending</span>
-          <strong className="stat-card-value">{pendingProblems}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Due Today</span>
-          <strong className="stat-card-value text-warning">{dueRevisionCount}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Mastered</span>
-          <strong className="stat-card-value text-success">{masteredProblems}</strong>
+        <p className="dsa-progress-subtitle">{solvedProblems} / {totalProblems} solved</p>
+        <div className="dsa-progress-track">
+          <motion.div
+            className="dsa-progress-fill"
+            initial={{ width: "0%" }}
+            animate={{ width: `${overallProgress}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
         </div>
       </div>
 
-      <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-        <section className="revision-today card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <div className="section-heading">
-            <h3 className="flex items-center gap-xs"><Activity size={18}/> Revision Due Today</h3>
+      <div className="dsa-split-section">
+        <section className="dsa-split-card">
+          <div className="dsa-section-heading">
+            <h3><Activity size={18} /> Due Today</h3>
             <p>Problems that are ready for revision now.</p>
           </div>
           {revisionProblems.length === 0 ? (
-            <div className="empty-state" style={{ margin: 'auto' }}>
-              <p>No revisions due today. Great job!</p>
+            <div className="dsa-empty-state" style={{ padding: '24px' }}>
+              <p className="dsa-empty-desc">No revisions due today. Great job!</p>
             </div>
           ) : (
-            <div className="activity-list" style={{ marginTop: '16px' }}>
+            <div className="dsa-activity-list">
               <AnimatePresence>
-                {revisionProblems.slice(0, 5).map((problem) => (
-                  <motion.div layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="activity-item" key={problem.id}>
-                    <div className="activity-content flex-1">
-                      <strong>{problem.title}</strong>
-                      <span className="muted-text flex items-center gap-xs" style={{ display: 'flex', gap: '8px' }}>
+                {revisionProblems.slice(0, 5).map((problem, i) => (
+                  <motion.div layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.05 }} className="dsa-mini-card" key={problem.id}>
+                    <div className="dsa-mini-content">
+                      <span className="dsa-mini-title">{problem.title}</span>
+                      <div className="dsa-mini-meta">
                         <span>{problem.topic}</span>
-                        <span className={getDifficultyBadge(problem.difficulty)}>{problem.difficulty}</span>
+                        <span className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</span>
                         <span>Rev: {problem.revisionCount || 0}</span>
-                      </span>
+                      </div>
                     </div>
-                    <button type="button" className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => reviseProblem(problem.id)}>Revise</button>
+                    <button type="button" className="dsa-btn-secondary" onClick={() => reviseProblem(problem.id)}>
+                      Revise
+                    </button>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -188,160 +211,183 @@ function DSA() {
           )}
         </section>
 
-        <div className="today-dsa card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <div className="section-heading">
-            <h3 className="flex items-center gap-xs"><Target size={18} /> Today's DSA</h3>
+        <section className="dsa-split-card">
+          <div className="dsa-section-heading">
+            <h3><Target size={18} /> Today's Target</h3>
             <p>Problems waiting to be solved.</p>
           </div>
           {todayProblems.length === 0 ? (
-            <div className="empty-state" style={{ margin: 'auto' }}>
-              <p>All problems are solved. Nice work!</p>
+            <div className="dsa-empty-state" style={{ padding: '24px' }}>
+              <p className="dsa-empty-desc">All problems are solved. Nice work!</p>
             </div>
           ) : (
-            <div className="activity-list" style={{ marginTop: '16px' }}>
-              {todayProblems.slice(0, 5).map((problem) => (
-                <div className="activity-item" key={problem.id}>
-                  <div className="activity-content flex-1">
-                    <strong>{problem.title}</strong>
-                    <span className="muted-text flex items-center gap-xs" style={{ display: 'flex', gap: '8px' }}>
-                      <span>{problem.topic}</span>
-                      <span className={getDifficultyBadge(problem.difficulty)}>{problem.difficulty}</span>
-                    </span>
-                  </div>
-                  <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} onClick={() => toggleSolved(problem.id)}>Mark Solved</button>
-                </div>
-              ))}
+            <div className="dsa-activity-list">
+              <AnimatePresence>
+                {todayProblems.slice(0, 5).map((problem, i) => (
+                  <motion.div layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.05 }} className="dsa-mini-card" key={problem.id}>
+                    <div className="dsa-mini-content">
+                      <span className="dsa-mini-title">{problem.title}</span>
+                      <div className="dsa-mini-meta">
+                        <span>{problem.topic}</span>
+                        <span className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</span>
+                      </div>
+                    </div>
+                    <button type="button" className="dsa-btn-secondary" onClick={() => toggleSolved(problem.id)}>
+                      Solve
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
-      <div className="topic-progress card" style={{ padding: '24px', margin: '24px 0' }}>
-        <div className="section-heading">
-          <h3>Topic Progress</h3>
-        </div>
-        <div className="topic-progress-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-          {topicProgress.map((item) => (
-            <div className="topic-progress-item" key={item.topic}>
-              <div className="topic-progress-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                <span className="font-medium">{item.topic}</span>
-                <span className="muted-text">{item.solved}/{item.total}</span>
-              </div>
-              <div className="progress-bar">
-                <motion.div className="progress-fill" initial={{ width: "0%" }} whileInView={{ width: `${item.percentage}%` }} viewport={{ once: true }} transition={{ duration: 0.8 }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <form className="dsa-form card" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '16px', padding: '24px' }} onSubmit={addProblem}>
-        <div className="form-group flex-1" style={{ minWidth: '220px' }}>
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Problem Title</label>
-          <input type="text" className="input-field" placeholder="E.g. Two Sum" value={title} onChange={(e) => setTitle(e.target.value)} />
-        </div>
-        <div className="form-group" style={{ minWidth: '100px' }}>
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Number</label>
-          <input type="number" className="input-field" placeholder="1" value={problemNumber} onChange={(e) => setProblemNumber(e.target.value)} />
-        </div>
-        <div className="form-group flex-1" style={{ minWidth: '220px' }}>
-          <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>URL</label>
-          <input type="url" className="input-field" placeholder="https://leetcode.com/..." value={problemLink} onChange={(e) => setProblemLink(e.target.value)} />
+      <form className="dsa-form-card" onSubmit={addProblem}>
+        <div className="dsa-section-heading" style={{ marginBottom: 0 }}>
+          <h3>Add New Problem</h3>
+          <p>Track a new DSA problem in your workspace.</p>
         </div>
         
-        <div style={{ width: '100%', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <div className="form-group flex-1" style={{ minWidth: '180px' }}>
-            <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Topic</label>
-            <select className="input-field" value={topic} onChange={(e) => setTopic(e.target.value)}>
+        <div className="dsa-form-grid">
+          <div className="dsa-input-group" style={{ gridColumn: 'span 2' }}>
+            <label className="dsa-input-label">Problem Title</label>
+            <input type="text" className="dsa-input" placeholder="e.g. Two Sum" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div className="dsa-input-group">
+            <label className="dsa-input-label">Number (Optional)</label>
+            <input type="number" className="dsa-input" placeholder="e.g. 1" value={problemNumber} onChange={(e) => setProblemNumber(e.target.value)} />
+          </div>
+          <div className="dsa-input-group" style={{ gridColumn: 'span 3' }}>
+            <label className="dsa-input-label">URL (Optional)</label>
+            <input type="url" className="dsa-input" placeholder="https://leetcode.com/problems/..." value={problemLink} onChange={(e) => setProblemLink(e.target.value)} />
+          </div>
+        </div>
+        
+        <div className="dsa-form-grid">
+          <div className="dsa-input-group">
+            <label className="dsa-input-label">Topic</label>
+            <select className="dsa-input" value={topic} onChange={(e) => setTopic(e.target.value)}>
               {["Arrays", "Strings", "Hashing", "Recursion", "Linked List", "Stack", "Queue", "Binary Search", "Trees", "Graphs", "Dynamic Programming"].map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div className="form-group" style={{ minWidth: '140px' }}>
-            <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Difficulty</label>
-            <select className="input-field" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+          <div className="dsa-input-group">
+            <label className="dsa-input-label">Difficulty</label>
+            <select className="dsa-input" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
               <option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option>
             </select>
           </div>
-          <div className="form-group" style={{ minWidth: '140px' }}>
-            <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Platform</label>
-            <select className="input-field" value={platform} onChange={(e) => setPlatform(e.target.value)}>
+          <div className="dsa-input-group">
+            <label className="dsa-input-label">Platform</label>
+            <select className="dsa-input" value={platform} onChange={(e) => setPlatform(e.target.value)}>
               <option value="LeetCode">LeetCode</option><option value="GFG">GFG</option><option value="CodeChef">CodeChef</option><option value="HackerRank">HackerRank</option>
             </select>
           </div>
-          <div className="form-group flex-1" style={{ minWidth: '220px' }}>
-            <label className="muted-text" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Quick Note</label>
-            <input type="text" className="input-field" placeholder="Approach used..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <div className="dsa-input-group" style={{ gridColumn: 'span 2' }}>
+            <label className="dsa-input-label">Quick Note (Optional)</label>
+            <input type="text" className="dsa-input" placeholder="Approach used..." value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button type="submit" className="btn-primary" style={{ height: '42px' }}>Add Problem</button>
+          <div className="dsa-input-group" style={{ justifyContent: 'flex-end' }}>
+            <button type="submit" className="dsa-btn-primary" style={{ height: '46px' }}>Add Problem</button>
           </div>
         </div>
       </form>
 
-      <div className="planner-section card" style={{ padding: '24px' }}>
-        <div className="task-filters" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      <div className="dsa-controls-bar">
+        <div className="dsa-controls-group flex-1">
           {["All", "Unsolved", "Solved", "Easy", "Medium", "Hard"].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className="badge" style={{ cursor: 'pointer', padding: '6px 12px', border: 'none', backgroundColor: filter === f ? 'var(--accent-primary)' : 'var(--bg-secondary)', color: filter === f ? '#fff' : 'var(--text-secondary)' }}>
+            <button key={f} type="button" onClick={() => setFilter(f)} className={`dsa-filter-btn ${filter === f ? 'active' : ''}`}>
               {f}
             </button>
           ))}
-          
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {["All", "Needs Revision", "Mastered"].map((f) => (
-              <button key={`rev-${f}`} onClick={() => setRevisionFilter(f === "All" ? "All" : f)} className="badge" style={{ cursor: 'pointer', padding: '6px 12px', border: 'none', backgroundColor: (revisionFilter === f || (f==="All" && revisionFilter==="All")) ? 'var(--text-primary)' : 'var(--bg-secondary)', color: (revisionFilter === f || (f==="All" && revisionFilter==="All")) ? '#fff' : 'var(--text-secondary)' }}>
-                {f === "All" ? "All Revision" : f}
-              </button>
-            ))}
-          </div>
         </div>
+        <div className="dsa-controls-group">
+          {["All", "Needs Revision", "Mastered"].map((f) => (
+            <button key={`rev-${f}`} type="button" onClick={() => setRevisionFilter(f === "All" ? "All" : f)} className={`dsa-filter-btn ${revisionFilter === f || (f==="All" && revisionFilter==="All") ? 'active-secondary' : ''}`}>
+              {f === "All" ? "All Revision" : f}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <div className="dsa-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <AnimatePresence>
-            {filteredProblems.map((problem) => (
-              <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`planner-task ${problem.solved ? "task-completed" : ""}`} style={{ backgroundColor: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }} key={problem.id}>
-                <div className="dsa-left flex-1" style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <button className="task-checkbox" style={{ marginTop: '2px' }} onClick={() => toggleSolved(problem.id)}>
-                    {problem.solved ? <CheckCircle size={20} className="text-success" /> : <Circle size={20} className="text-muted" />}
-                  </button>
-                  <div className="flex-1">
-                    <h3 className={`task-title ${problem.solved ? "muted-text strike-through" : ""}`} style={{ margin: '0 0 8px 0', fontSize: '16px' }}>
-                      {problem.title}
-                    </h3>
-                    <div className="task-details flex items-center flex-wrap" style={{ gap: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                      {problem.problemNumber && <span>#{problem.problemNumber}</span>}
-                      <span className="flex items-center gap-xs" style={{ display: 'flex', gap: '4px' }}><BookOpen size={14}/> {problem.topic}</span>
-                      <span className={getDifficultyBadge(problem.difficulty)}>{problem.difficulty}</span>
-                      <span className="badge">{problem.platform}</span>
+      <div className="dsa-list">
+        {filteredProblems.length === 0 ? (
+          <div className="dsa-empty-state">
+            <span className="dsa-empty-title">No problems found</span>
+            <span className="dsa-empty-desc">Start building your DSA progress by adding your first problem, or adjust your filters.</span>
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {filteredProblems.map((problem, i) => (
+              <motion.div 
+                layout 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, scale: 0.95 }} 
+                transition={{ duration: 0.2, delay: i * 0.04 }} 
+                className={`dsa-card ${problem.solved ? "solved" : ""}`} 
+                key={problem.id}
+              >
+                <button 
+                  className={`dsa-card-checkbox ${problem.solved ? "checked" : ""}`} 
+                  onClick={() => toggleSolved(problem.id)}
+                  aria-label={problem.solved ? "Mark unsolved" : "Mark solved"}
+                >
+                  <AnimatePresence mode="wait">
+                    {problem.solved ? (
+                      <motion.div key="check" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.15 }}>
+                        <CheckCircle size={22} />
+                      </motion.div>
+                    ) : (
+                      <motion.div key="circle" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.15 }}>
+                        <Circle size={22} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+                
+                <div className="dsa-card-content">
+                  <div className="dsa-card-header">
+                    <h3 className="dsa-card-title">{problem.title}</h3>
+                    <div className="dsa-card-meta">
+                      {problem.problemNumber && <span className="flex items-center gap-xs"><Hash size={12}/>{problem.problemNumber}</span>}
+                      <span className="flex items-center gap-xs"><BookOpen size={14}/> {problem.topic}</span>
+                      <span className={getDifficultyClass(problem.difficulty)}>{problem.difficulty}</span>
+                      <span className="dsa-badge platform">{problem.platform}</span>
+                      {problem.problemLink && (
+                        <a href={problem.problemLink} target="_blank" rel="noreferrer" className="dsa-card-link">
+                          <ExternalLink size={14} /> Open
+                        </a>
+                      )}
                     </div>
-                    {problem.notes && (
-                      <p className="problem-notes" style={{ marginTop: '12px', fontSize: '14px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                        "{problem.notes}"
-                      </p>
-                    )}
-                    {problem.problemLink && (
-                      <a href={problem.problemLink} target="_blank" rel="noreferrer" className="problem-link flex items-center gap-xs" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '12px', color: 'var(--accent-primary)', textDecoration: 'none', fontSize: '13px', fontWeight: '500' }}>
-                        <ExternalLink size={14} /> Open Problem
-                      </a>
-                    )}
                   </div>
+                  {problem.notes && (
+                    <p className="dsa-card-notes">"{problem.notes}"</p>
+                  )}
                 </div>
 
-                <div className="revision-control" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                  <span className={getRevisionBadge(problem.revisionStatus || "Not Started")}>
-                    {problem.revisionStatus || "Not Started"}
-                  </span>
-                  <select className="input-field" style={{ padding: '6px 10px', width: 'auto', minWidth: '140px', fontSize: '13px' }} value={problem.revisionStatus || "Not Started"} onChange={(e) => updateRevisionStatus(problem.id, e.target.value)}>
-                    <option value="Not Started">Not Started</option>
-                    <option value="Needs Revision">Needs Revision</option>
-                    <option value="Mastered">Mastered</option>
-                  </select>
+                <div className="dsa-card-actions">
+                  <div className="dsa-action-row">
+                    <span className={getRevisionClass(problem.revisionStatus || "Not Started")}>
+                      {problem.revisionStatus || "Not Started"}
+                    </span>
+                    <select className="dsa-select-small" value={problem.revisionStatus || "Not Started"} onChange={(e) => updateRevisionStatus(problem.id, e.target.value)}>
+                      <option value="Not Started">Not Started</option>
+                      <option value="Needs Revision">Needs Revision</option>
+                      <option value="Mastered">Mastered</option>
+                    </select>
+                  </div>
+                  <button type="button" className="dsa-btn-icon" onClick={() => deleteProblem(problem.id)} aria-label="Delete problem">
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
+        )}
       </div>
     </main>
   );
 }
+
 export default DSA;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getStorage, setStorage } from "../utils/storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, FileText, Trash2, Edit3, Tag, Clock } from "lucide-react";
+import "./Notes.css";
 
 function getCategoryBadge(category) {
   switch (category) {
@@ -12,6 +13,32 @@ function getCategoryBadge(category) {
     case "Interview": return "badge badge-success";
     default: return "badge";
   }
+}
+
+function StatCard({ label, value, type, delay = 0 }) {
+  const indicatorColor = {
+    accent: "var(--accent-primary)",
+    info: "var(--status-info)",
+    success: "var(--status-success)",
+    warning: "var(--status-warning)",
+    danger: "var(--status-danger)",
+    neutral: "var(--text-muted)",
+  }[type] || "var(--text-muted)";
+
+  return (
+    <motion.div 
+      className="notes-stat-card"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay * 0.04, ease: "easeOut" }}
+    >
+      <div className="notes-stat-title">
+        {label}
+        <span className="notes-stat-indicator" style={{ backgroundColor: indicatorColor }} />
+      </div>
+      <div className="notes-stat-value">{value}</div>
+    </motion.div>
+  );
 }
 
 function Notes() {
@@ -99,126 +126,171 @@ function Notes() {
   const interviewNotes = notes.filter((note) => note.category === "Interview").length;
 
   return (
-    <main className="dashboard">
-      <div className="dashboard-header">
+    <main className="dashboard notes-page">
+      <div className="dashboard-header notes-header">
         <h2>Notes</h2>
-        <p className="page-description">Store and search your learning and project notes.</p>
+        <p>Store and search your learning and project notes.</p>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="stat-card">
-          <span className="stat-card-title">Total Notes</span>
-          <strong className="stat-card-value">{totalNotes}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">DSA</span>
-          <strong className="stat-card-value">{dsaNotes}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Java</span>
-          <strong className="stat-card-value">{javaNotes}</strong>
-        </div>
-        <div className="stat-card">
-          <span className="stat-card-title">Interview</span>
-          <strong className="stat-card-value">{interviewNotes}</strong>
-        </div>
+      <div className="notes-stats">
+        <StatCard label="Total Notes" value={totalNotes} type="neutral" delay={0} />
+        <StatCard label="DSA" value={dsaNotes} type="success" delay={1} />
+        <StatCard label="Java" value={javaNotes} type="warning" delay={2} />
+        <StatCard label="Interview" value={interviewNotes} type="success" delay={3} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
-        <form className="notes-form card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px' }} onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <div className="form-group flex-1" style={{ minWidth: '240px' }}>
-              <input type="text" className="input-field" placeholder="Note title" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <AnimatePresence mode="wait">
+        <motion.form 
+          key={editingId !== null ? "edit" : "add"}
+          className="notes-form" 
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.2 }}
+        >
+          <h3 className="notes-form-header">
+            {editingId !== null ? "Editing Note" : "Create New Note"}
+          </h3>
+          <div className="notes-form-row">
+            <div className="notes-input-group">
+              <label className="notes-input-label">Note Title</label>
+              <input 
+                type="text" 
+                className="notes-input" 
+                placeholder="What is this note about?" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                required 
+              />
             </div>
-            <div className="form-group" style={{ minWidth: '150px' }}>
-              <select className="input-field" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <div className="notes-input-group category">
+              <label className="notes-input-label">Category</label>
+              <select className="notes-select" value={category} onChange={(e) => setCategory(e.target.value)}>
                 {["DSA", "Java", "Spring Boot", "React", "College", "Projects", "Interview", "Other"].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div className="form-group flex-1" style={{ minWidth: '240px' }}>
-              <input type="text" className="input-field" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
+            <div className="notes-input-group">
+              <label className="notes-input-label">Tags</label>
+              <input 
+                type="text" 
+                className="notes-input" 
+                placeholder="e.g. arrays, sorting (comma separated)" 
+                value={tags} 
+                onChange={(e) => setTags(e.target.value)} 
+              />
             </div>
           </div>
           
-          <div className="form-group">
-            <textarea className="input-field" placeholder="Write your note..." value={content} onChange={(e) => setContent(e.target.value)} style={{ minHeight: '120px', resize: 'vertical' }} />
+          <div className="notes-input-group" style={{ minWidth: '100%' }}>
+            <label className="notes-input-label">Content</label>
+            <textarea 
+              className="notes-textarea" 
+              placeholder="Write your detailed note here..." 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              required
+            />
           </div>
 
-          <div style={{ display: "flex", gap: "10px", justifyContent: 'flex-end' }}>
+          <div className="notes-form-actions">
             {editingId !== null && (
-              <button type="button" className="btn-primary" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} onClick={resetForm}>
+              <button type="button" className="notes-btn-secondary" onClick={resetForm}>
                 Cancel
               </button>
             )}
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="notes-btn-primary">
               {editingId !== null ? "Save Changes" : "Add Note"}
             </button>
           </div>
-        </form>
+        </motion.form>
+      </AnimatePresence>
 
-        <div className="notes-section">
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="form-group flex-1" style={{ position: 'relative', minWidth: '240px' }}>
-              <Search size={18} className="text-muted" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input type="text" className="input-field" placeholder="Search notes, content, tags..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ paddingLeft: '40px' }} />
-            </div>
-            <div className="form-group" style={{ width: '200px' }}>
-              <select className="input-field" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <option value="All">All Categories</option>
-                {["DSA", "Java", "Spring Boot", "React", "College", "Projects", "Interview", "Other"].map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+      <div className="notes-section">
+        <div className="notes-search-section">
+          <div className="notes-search-bar">
+            <Search size={18} className="notes-search-icon" />
+            <input 
+              type="text" 
+              className="notes-search-input" 
+              placeholder="Search notes by title, content, or tags..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
           </div>
+          <select 
+            className="notes-filter-select" 
+            value={categoryFilter} 
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="All">All Categories</option>
+            {["DSA", "Java", "Spring Boot", "React", "College", "Projects", "Interview", "Other"].map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
 
-          <div className="notes-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
-            {filteredNotes.length === 0 ? (
-              <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-                <FileText size={48} className="text-muted" style={{ marginBottom: '16px', opacity: 0.5 }} />
-                <p>No notes found.</p>
-              </div>
-            ) : (
-              <AnimatePresence>
-                {filteredNotes.map((note) => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="note-card card" key={note.id} style={{ display: 'flex', flexDirection: 'column', padding: '24px' }}>
-                    <div className="note-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                      <div style={{ flex: 1, paddingRight: '12px' }}>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', lineHeight: 1.3 }}>{note.title}</h3>
+        <div className="notes-list">
+          {filteredNotes.length === 0 ? (
+            <div className="notes-empty">
+              <FileText size={48} className="notes-empty-icon" />
+              <p className="notes-empty-title">
+                {search || categoryFilter !== "All" ? "No notes found" : "No notes yet"}
+              </p>
+              <p className="notes-empty-desc">
+                {search || categoryFilter !== "All" ? "Try adjusting your search or filters." : "Create your first knowledge item above."}
+              </p>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredNotes.map((note, index) => (
+                <motion.div 
+                  layout 
+                  initial={{ opacity: 0, scale: 0.95 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  exit={{ opacity: 0, scale: 0.9 }} 
+                  transition={{ duration: 0.2, delay: index * 0.03 }}
+                  className="note-card" 
+                  key={note.id} 
+                >
+                  <div className="note-header">
+                    <div className="note-title-group">
+                      <h3 className="note-title">{note.title}</h3>
+                      <div>
                         <span className={getCategoryBadge(note.category)}>{note.category}</span>
                       </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button type="button" className="icon-button edit-button" onClick={() => startEditing(note)}>
-                          <Edit3 size={16} />
-                        </button>
-                        <button type="button" className="icon-button delete-button" onClick={() => deleteNote(note.id)}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
                     </div>
-
-                    <p className="note-content" style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)', fontSize: '15px', lineHeight: 1.6, flex: 1, whiteSpace: 'pre-wrap' }}>
-                      {note.content}
-                    </p>
-
-                    <div className="note-footer" style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {note.tags && (
-                        <div className="note-tags flex items-center flex-wrap" style={{ gap: '8px' }}>
-                          <Tag size={14} className="text-muted" />
-                          {note.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                            <span className="badge" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: '11px', padding: '2px 8px' }} key={tag}>#{tag}</span>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="note-date flex items-center gap-xs muted-text" style={{ fontSize: '12px' }}>
-                        <Clock size={12} />
-                        <span>Created: {note.createdAt} {note.updatedAt && `• Updated: ${note.updatedAt}`}</span>
-                      </div>
+                    <div className="note-actions">
+                      <button type="button" className="note-btn-icon edit" onClick={() => startEditing(note)} aria-label="Edit note">
+                        <Edit3 size={16} />
+                      </button>
+                      <button type="button" className="note-btn-icon delete" onClick={() => deleteNote(note.id)} aria-label="Delete note">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
+                  </div>
+
+                  <p className="note-content">
+                    {note.content}
+                  </p>
+
+                  <div className="note-footer">
+                    {note.tags && (
+                      <div className="note-tags">
+                        <Tag size={14} className="note-tag-icon" />
+                        {note.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                          <span className="note-tag-pill" key={tag}>#{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="note-date">
+                      <Clock size={12} />
+                      <span>Created: {note.createdAt} {note.updatedAt && `• Updated: ${note.updatedAt}`}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </main>
