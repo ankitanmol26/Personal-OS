@@ -1,0 +1,10 @@
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\config\CorsConfig.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\controller\HealthController.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\controller\TaskController.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\dto\TaskDTO.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\entity\Task.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\exception\GlobalExceptionHandler.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\exception\ResourceNotFoundException.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\PersonalOsBackendApplication.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\repository\TaskRepository.java
+D:\CODE-PLAYGROUND\Personal\personal-os\backend\src\main\java\com\personalos\backend\service\TaskService.java

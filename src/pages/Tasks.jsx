@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { isOverdue } from "../utils/date";
-import { getStorage, setStorage } from "../utils/storage";
+import { getTasks, createTask, updateTask, deleteTask as apiDeleteTask } from "../services/taskService";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Calendar, CheckCircle, Circle, Edit3, Folder, AlertCircle } from "lucide-react";
 import "./Tasks.css";
@@ -51,7 +51,10 @@ function StatCard({ label, value, type, delay = 0 }) {
 }
 
 function Tasks() {
-  const [tasks, setTasks] = useState(() => getStorage("tasks"));
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [filter, setFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
@@ -63,8 +66,22 @@ function Tasks() {
   const [editingTaskId, setEditingTaskId] = useState(null);
 
   useEffect(() => {
-    setStorage("tasks", tasks);
-  }, [tasks]);
+    fetchTasks();
+  }, []);
+
+  async function fetchTasks() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getTasks();
+      setTasks(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load tasks. Please ensure the backend is running.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function handleEditTask(task) {
     setTaskText(task.text);
@@ -74,49 +91,69 @@ function Tasks() {
     setEditingTaskId(task.id);
   }
 
-  function addTask(event) {
+  async function addTask(event) {
     event.preventDefault();
     if (taskText.trim() === "") return;
 
-    if (editingTaskId !== null) {
-      setTasks((currentTasks) =>
-        currentTasks.map((task) =>
-          task.id === editingTaskId
-            ? { ...task, text: taskText.trim(), category, priority, dueDate }
-            : task
-        )
-      );
-      setEditingTaskId(null);
-    } else {
-      setTasks((currentTasks) => [
-        ...currentTasks,
-        {
-          id: Date.now(),
-          text: taskText.trim(),
-          category,
-          priority,
-          dueDate,
-          completed: false,
-        },
-      ]);
+    const taskData = {
+      text: taskText.trim(),
+      category,
+      priority,
+      dueDate: dueDate || null,
+      completed: false
+    };
+
+    try {
+      if (editingTaskId !== null) {
+        const taskToUpdate = tasks.find(t => t.id === editingTaskId);
+        const updated = await updateTask(editingTaskId, { ...taskToUpdate, ...taskData, completed: taskToUpdate.completed });
+        setTasks((currentTasks) =>
+          currentTasks.map((task) =>
+            task.id === editingTaskId ? updated : task
+          )
+        );
+        setEditingTaskId(null);
+      } else {
+        const created = await createTask(taskData);
+        setTasks((currentTasks) => [...currentTasks, created]);
+      }
+
+      setTaskText("");
+      setCategory("General");
+      setPriority("Medium");
+      setDueDate("");
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to save task.");
     }
-
-    setTaskText("");
-    setCategory("General");
-    setPriority("Medium");
-    setDueDate("");
   }
 
-  function toggleTask(id) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  async function toggleTask(id) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+
+    try {
+      const updated = await updateTask(id, { ...task, completed: !task.completed });
+      setTasks((currentTasks) =>
+        currentTasks.map((t) => (t.id === id ? updated : t))
+      );
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update task status.");
+    }
   }
 
-  function deleteTask(id) {
-    setTasks(tasks.filter((task) => task.id !== id));
+  async function handleDeleteTask(id) {
+    try {
+      await apiDeleteTask(id);
+      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete task.");
+    }
   }
 
   const filteredTasks = tasks.filter((task) => {
@@ -207,7 +244,7 @@ function Tasks() {
           <button
             type="button"
             className="task-btn-icon delete"
-            onClick={() => deleteTask(task.id)}
+            onClick={() => handleDeleteTask(task.id)}
             aria-label="Delete task"
           >
             <Trash2 size={16} />
@@ -223,6 +260,18 @@ function Tasks() {
         <h2>Tasks</h2>
         <p>Manage everything you need to do.</p>
       </div>
+
+      {error && (
+        <div className="tasks-error" style={{ padding: '12px', backgroundColor: 'var(--status-danger)', color: 'white', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'space-between' }}>
+          <span>{error}</span>
+          <button onClick={fetchTasks} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Retry</button>
+        </div>
+      )}
+
+      {loading && tasks.length === 0 ? (
+        <div className="tasks-loading" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading tasks...</div>
+      ) : (
+        <>
 
       <div className="tasks-stats">
         <StatCard label="Total" value={totalTasks} type="neutral" delay={0} />
@@ -374,6 +423,8 @@ function Tasks() {
           </div>
         )}
       </div>
+      </>
+      )}
     </main>
   );
 }
