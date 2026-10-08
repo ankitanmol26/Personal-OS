@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { getStorage, setStorage } from "../utils/storage";
 import { isProjectOverdue } from "../utils/project";
+import { getProjects, createProject, deleteProject as deleteProjectApi, addProjectTask as addProjectTaskApi, updateProjectTask as updateProjectTaskApi } from "../services/projectService";
+import { useApi } from "../hooks/useApi";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { Folder, GitBranch, ExternalLink, Calendar, Code, CheckCircle, Circle, Trash2, ArrowLeft, Plus } from "lucide-react";
 import "./Projects.css";
@@ -16,7 +18,8 @@ function getStatusBadge(status) {
 }
 
 function Projects() {
-  const [projects, setProjects] = useState(() => getStorage("projects"));
+  const [projects, setProjects] = useState([]);
+  const { loading, error, setError, withApi, withApiLoading } = useApi(true);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -30,51 +33,74 @@ function Projects() {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
 
   useEffect(() => {
-    setStorage("projects", projects);
-  }, [projects]);
+    fetchProjects();
+  }, []);
 
-  function addProject(event) {
+  async function fetchProjects() {
+    try {
+      const data = await withApiLoading(() => getProjects(), "Failed to load projects.");
+      setProjects(data);
+    } catch (error) {
+      // error handled by hook
+    }
+  }
+
+  async function addProject(event) {
     event.preventDefault();
     if (name.trim() === "") return;
 
     const newProject = {
-      id: Date.now(),
       name, description, techStack, status,
-      progress: Number(progress), deadline, githubLink, liveLink, tasks: [],
+      progress: Number(progress), 
+      deadline: deadline || null, 
+      githubLink, liveLink, tasks: [],
     };
 
-    setProjects([...projects, newProject]);
-    setName(""); setDescription(""); setTechStack(""); setStatus("Planning");
-    setProgress(0); setDeadline(""); setGithubLink(""); setLiveLink("");
+    try {
+      const created = await withApi(() => createProject(newProject), "Failed to add project.");
+      setProjects([...projects, created]);
+      setName(""); setDescription(""); setTechStack(""); setStatus("Planning");
+      setProgress(0); setDeadline(""); setGithubLink(""); setLiveLink("");
+    } catch (error) {
+      // error handled by hook
+    }
   }
 
-  function deleteProject(id) {
-    setProjects(projects.filter((project) => project.id !== id));
+  async function deleteProject(id) {
+    try {
+      await withApi(() => deleteProjectApi(id), "Failed to delete project.");
+      setProjects(projects.filter((project) => project.id !== id));
+      if (selectedProjectId === id) setSelectedProjectId(null);
+    } catch (error) {
+      // error handled
+    }
   }
 
-  function addProjectTask(projectId) {
+  async function addProjectTask(projectId) {
     const taskText = taskInputs[projectId]?.trim();
     if (!taskText) return;
 
-    setProjects(
-      projects.map((project) => {
-        if (project.id !== projectId) return project;
-        return { ...project, tasks: [...(project.tasks || []), { id: Date.now(), title: taskText, completed: false }] };
-      })
-    );
-    setTaskInputs({ ...taskInputs, [projectId]: "" });
+    try {
+      const updatedProject = await withApi(() => addProjectTaskApi(projectId, { title: taskText, completed: false }), "Failed to add project task.");
+      setProjects(projects.map((project) => (project.id === projectId ? updatedProject : project)));
+      setTaskInputs({ ...taskInputs, [projectId]: "" });
+    } catch (error) {
+      // error handled
+    }
   }
 
-  function toggleProjectTask(projectId, taskId) {
-    setProjects(
-      projects.map((project) => {
-        if (project.id !== projectId) return project;
-        return {
-          ...project,
-          tasks: (project.tasks || []).map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t)),
-        };
-      })
-    );
+  async function toggleProjectTask(projectId, taskId) {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const task = project.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      const updatedProject = await withApi(() => updateProjectTaskApi(projectId, taskId, { ...task, completed: !task.completed }), "Failed to update project task.");
+      setProjects(projects.map((p) => (p.id === projectId ? updatedProject : p)));
+    } catch (error) {
+      // error handled
+    }
   }
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
@@ -86,6 +112,12 @@ function Projects() {
         <p>Track your development projects and progress.</p>
       </div>
 
+      <ApiError error={error} onRetry={fetchProjects} />
+
+      {loading && projects.length === 0 ? (
+        <ApiLoading message="Loading projects..." />
+      ) : (
+        <>
       <AnimatePresence mode="wait">
         {!selectedProject ? (
           <motion.div 
@@ -369,6 +401,8 @@ function Projects() {
           </motion.div>
         )}
       </AnimatePresence>
+      </>
+      )}
     </main>
   );
 }

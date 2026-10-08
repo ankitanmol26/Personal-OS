@@ -1,0 +1,6 @@
+$kind: collection
+name: DSA Tracker
+description: 'Collection for the DSA Tracker API — manage and track DSA problems stored in MySQL.'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8080'

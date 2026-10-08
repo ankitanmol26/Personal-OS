@@ -6,12 +6,13 @@ import {
   Code, Activity, Hash, Tag, Clock, FileText, CheckSquare, Target, Folder
 } from "lucide-react";
 import useDashboardData from "../hooks/useDashboardData";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { isOverdue, getTodayDate } from "../utils/date";
 import { isProjectOverdue } from "../utils/project";
 import "./Dashboard.css";
 
 function Dashboard() {
-  const { tasks, projects, dsaProblems, notes } = useDashboardData();
+  const { tasks, projects, dsaProblems, notes, loading, error, loadData } = useDashboardData();
   const navigate = useNavigate();
 
   // Tasks Derived
@@ -130,6 +131,12 @@ function Dashboard() {
         <p className="page-description">Command Center for PersonalOS</p>
       </div>
 
+      <ApiError error={error} onRetry={loadData} />
+
+      {loading && tasks.length === 0 && projects.length === 0 && dsaProblems.length === 0 && notes.length === 0 ? (
+        <ApiLoading message="Loading dashboard metrics..." />
+      ) : (
+        <>
       {/* OVERVIEW STATS */}
       <div className="dashboard-v2-stats">
         <StatCard title="Tasks" value={pendingTasks.length} description={`${totalTasks} total tasks`} type="accent" />
@@ -350,6 +357,8 @@ function Dashboard() {
 
         </div>
       </div>
+      </>
+      )}
     </main>
   );
 }

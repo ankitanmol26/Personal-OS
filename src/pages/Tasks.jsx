@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { isOverdue } from "../utils/date";
 import { getTasks, createTask, updateTask, deleteTask as apiDeleteTask } from "../services/taskService";
+import { useApi } from "../hooks/useApi";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Calendar, CheckCircle, Circle, Edit3, Folder, AlertCircle } from "lucide-react";
 import "./Tasks.css";
@@ -52,8 +54,7 @@ function StatCard({ label, value, type, delay = 0 }) {
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { loading, error, setError, withApi, withApiLoading } = useApi(true);
 
   const [filter, setFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -71,15 +72,10 @@ function Tasks() {
 
   async function fetchTasks() {
     try {
-      setLoading(true);
-      setError(null);
-      const data = await getTasks();
+      const data = await withApiLoading(() => getTasks(), "Failed to load tasks. Please ensure the backend is running.");
       setTasks(data);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load tasks. Please ensure the backend is running.");
-    } finally {
-      setLoading(false);
+      // error handled by hook
     }
   }
 
@@ -106,7 +102,7 @@ function Tasks() {
     try {
       if (editingTaskId !== null) {
         const taskToUpdate = tasks.find(t => t.id === editingTaskId);
-        const updated = await updateTask(editingTaskId, { ...taskToUpdate, ...taskData, completed: taskToUpdate.completed });
+        const updated = await withApi(() => updateTask(editingTaskId, { ...taskToUpdate, ...taskData, completed: taskToUpdate.completed }), "Failed to update task.");
         setTasks((currentTasks) =>
           currentTasks.map((task) =>
             task.id === editingTaskId ? updated : task
@@ -114,7 +110,7 @@ function Tasks() {
         );
         setEditingTaskId(null);
       } else {
-        const created = await createTask(taskData);
+        const created = await withApi(() => createTask(taskData), "Failed to save task.");
         setTasks((currentTasks) => [...currentTasks, created]);
       }
 
@@ -122,10 +118,8 @@ function Tasks() {
       setCategory("General");
       setPriority("Medium");
       setDueDate("");
-      setError(null);
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Failed to save task.");
+      // error handled by hook
     }
   }
 
@@ -134,25 +128,21 @@ function Tasks() {
     if (!task) return;
 
     try {
-      const updated = await updateTask(id, { ...task, completed: !task.completed });
+      const updated = await withApi(() => updateTask(id, { ...task, completed: !task.completed }), "Failed to update task status.");
       setTasks((currentTasks) =>
         currentTasks.map((t) => (t.id === id ? updated : t))
       );
-      setError(null);
     } catch (err) {
-      console.error(err);
-      setError("Failed to update task status.");
+      // error handled
     }
   }
 
   async function handleDeleteTask(id) {
     try {
-      await apiDeleteTask(id);
+      await withApi(() => apiDeleteTask(id), "Failed to delete task.");
       setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
-      setError(null);
     } catch (err) {
-      console.error(err);
-      setError("Failed to delete task.");
+      // error handled
     }
   }
 
@@ -262,14 +252,11 @@ function Tasks() {
       </div>
 
       {error && (
-        <div className="tasks-error" style={{ padding: '12px', backgroundColor: 'var(--status-danger)', color: 'white', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'space-between' }}>
-          <span>{error}</span>
-          <button onClick={fetchTasks} style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer' }}>Retry</button>
-        </div>
+        <ApiError error={error} onRetry={fetchTasks} />
       )}
 
       {loading && tasks.length === 0 ? (
-        <div className="tasks-loading" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading tasks...</div>
+        <ApiLoading message="Loading tasks..." />
       ) : (
         <>
 

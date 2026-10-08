@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { getStorage, setStorage } from "../utils/storage";
+import { getProblems, createProblem, updateProblem as updateProblemApi, deleteProblem as deleteProblemApi } from "../services/dsaService";
 import { getTodayDate, addDays, isRevisionDue } from "../utils/date";
+import { useApi } from "../hooks/useApi";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, CheckCircle, Circle, BookOpen, Activity, Target, Trash2, Hash } from "lucide-react";
 import "../styles/DSA.css";
@@ -58,75 +60,100 @@ function DSA() {
   const [problemLink, setProblemLink] = useState("");
   const [notes, setNotes] = useState("");
 
-  const defaultProblems = [
-    {
-      id: 1, title: "Two Sum", topic: "Arrays", difficulty: "Easy", platform: "LeetCode", problemLink: "https://leetcode.com/problems/two-sum/",
-      solved: true, revisionStatus: "Needs Revision",
-    },
-    {
-      id: 2, title: "Second Largest Element", topic: "Arrays", difficulty: "Easy", platform: "GFG",
-      solved: true, revisionStatus: "Not Started",
-    },
-    {
-      id: 3, title: "Best Time to Buy and Sell Stock", topic: "Arrays", difficulty: "Easy", platform: "LeetCode",
-      solved: false, revisionStatus: "Not Started",
-    },
-    {
-      id: 4, title: "Maximum Subarray", topic: "Arrays", difficulty: "Medium", platform: "LeetCode",
-      solved: false, revisionStatus: "Not Started",
-    },
-  ];
-
-  const [problems, setProblems] = useState(() => {
-    const savedProblems = getStorage("dsaProblems", null);
-    return savedProblems ?? defaultProblems;
-  });
+  const [problems, setProblems] = useState([]);
+  const { loading, error, setError, withApi, withApiLoading } = useApi(true);
 
   useEffect(() => {
-    setStorage("dsaProblems", problems);
-  }, [problems]);
+    fetchProblems();
+  }, []);
 
-  function addProblem(event) {
+  async function fetchProblems() {
+    try {
+      const data = await withApiLoading(() => getProblems(), "Failed to load DSA problems.");
+      setProblems(data);
+    } catch (error) {
+      // error handled by hook
+    }
+  }
+
+  async function addProblem(event) {
     event.preventDefault();
     if (title.trim() === "") return;
 
     const newProblem = {
-      id: Date.now(),
       title, topic, difficulty, platform, problemNumber, problemLink, notes,
       solved: false, revisionStatus: "Not Started", revisionCount: 0, nextRevisionDate: null,
     };
 
-    setProblems([...problems, newProblem]);
-    setTitle(""); setTopic("Arrays"); setDifficulty("Easy"); setPlatform("LeetCode");
-    setProblemNumber(""); setProblemLink(""); setNotes("");
+    try {
+      const created = await withApi(() => createProblem(newProblem), "Failed to add problem.");
+      setProblems([...problems, created]);
+      setTitle(""); setTopic("Arrays"); setDifficulty("Easy"); setPlatform("LeetCode");
+      setProblemNumber(""); setProblemLink(""); setNotes("");
+    } catch (error) {
+      // error handled by hook
+    }
   }
 
-  function toggleSolved(id) {
-    setProblems(problems.map((problem) => problem.id === id ? { ...problem, solved: !problem.solved } : problem));
+  async function toggleSolved(id) {
+    const problemToUpdate = problems.find((p) => p.id === id);
+    if (!problemToUpdate) return;
+    
+    const updatedProblem = { ...problemToUpdate, solved: !problemToUpdate.solved };
+    
+    try {
+      const result = await withApi(() => updateProblemApi(id, updatedProblem), "Failed to update problem.");
+      setProblems(problems.map((problem) => problem.id === id ? result : problem));
+    } catch (error) {
+      // error handled
+    }
   }
   
-  function deleteProblem(id) {
-    setProblems(problems.filter((problem) => problem.id !== id));
+  async function deleteProblem(id) {
+    try {
+      await withApi(() => deleteProblemApi(id), "Failed to delete problem.");
+      setProblems(problems.filter((problem) => problem.id !== id));
+    } catch (error) {
+      // error handled
+    }
   }
 
-  function updateRevisionStatus(id, status) {
-    setProblems(problems.map((problem) => problem.id === id ? { ...problem, revisionStatus: status } : problem));
+  async function updateRevisionStatus(id, status) {
+    const problemToUpdate = problems.find((p) => p.id === id);
+    if (!problemToUpdate) return;
+
+    const updatedProblem = { ...problemToUpdate, revisionStatus: status };
+
+    try {
+      const result = await withApi(() => updateProblemApi(id, updatedProblem), "Failed to update revision status.");
+      setProblems(problems.map((problem) => problem.id === id ? result : problem));
+    } catch (error) {
+      // error handled
+    }
   }
 
-  function reviseProblem(id) {
+  async function reviseProblem(id) {
+    const problemToUpdate = problems.find((p) => p.id === id);
+    if (!problemToUpdate) return;
+
     const today = getTodayDate();
-    setProblems(problems.map((problem) => {
-      if (problem.id !== id) return problem;
-      const revisionCount = (problem.revisionCount || 0) + 1;
-      const intervals = [1, 3, 7, 14, 30];
-      const interval = intervals[Math.min(revisionCount - 1, intervals.length - 1)];
-      return {
-        ...problem,
-        revisionCount,
-        revisionStatus: "Needs Revision",
-        nextRevisionDate: addDays(today, interval),
-      };
-    }));
+    const revisionCount = (problemToUpdate.revisionCount || 0) + 1;
+    const intervals = [1, 3, 7, 14, 30];
+    const interval = intervals[Math.min(revisionCount - 1, intervals.length - 1)];
+    
+    const updatedProblem = {
+      ...problemToUpdate,
+      revisionCount,
+      revisionStatus: "Needs Revision",
+      nextRevisionDate: addDays(today, interval),
+    };
+
+    try {
+      const result = await withApi(() => updateProblemApi(id, updatedProblem), "Failed to update revision.");
+      setProblems(problems.map((problem) => problem.id === id ? result : problem));
+    } catch (error) {
+      // error handled
+    }
   }
 
   const totalProblems = problems.length;
@@ -154,6 +181,12 @@ function DSA() {
         <p>Build consistency. Solve problems. Review what you've learned.</p>
       </div>
 
+      <ApiError error={error} onRetry={fetchProblems} />
+
+      {loading && problems.length === 0 ? (
+        <ApiLoading message="Loading DSA problems..." />
+      ) : (
+        <>
       <div className="dsa-kpi-grid">
         <StatCard label="Total Problems" value={totalProblems} type="neutral" delay={0} />
         <StatCard label="Solved" value={solvedProblems} type="success" delay={1} />
@@ -386,6 +419,8 @@ function DSA() {
           </AnimatePresence>
         )}
       </div>
+      </>
+      )}
     </main>
   );
 }

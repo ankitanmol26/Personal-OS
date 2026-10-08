@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getStorage, setStorage } from "../utils/storage";
+import { getNotes, createNote, updateNote as updateNoteApi, deleteNote as deleteNoteApi } from "../services/noteService";
+import { useApi } from "../hooks/useApi";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, FileText, Trash2, Edit3, Tag, Clock } from "lucide-react";
 import "./Notes.css";
@@ -42,7 +44,9 @@ function StatCard({ label, value, type, delay = 0 }) {
 }
 
 function Notes() {
-  const [notes, setNotes] = useState(() => getStorage("notes"));
+  const [notes, setNotes] = useState([]);
+  const { loading, error, setError, withApi, withApiLoading } = useApi(true);
+
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("DSA");
   const [content, setContent] = useState("");
@@ -52,25 +56,35 @@ function Notes() {
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    setStorage("notes", notes);
-  }, [notes]);
+    fetchNotes();
+  }, []);
 
-  function addNote(event) {
+  async function fetchNotes() {
+    try {
+      const data = await withApiLoading(() => getNotes(), "Failed to load notes.");
+      setNotes(data);
+    } catch (err) {}
+  }
+
+  async function addNote(event) {
     event.preventDefault();
     if (title.trim() === "" || content.trim() === "") return;
 
-    const newNote = {
-      id: Date.now(),
-      title, category, content, tags,
-      createdAt: new Date().toLocaleDateString(),
-    };
+    const newNote = { title, category, content, tags };
 
-    setNotes([newNote, ...notes]);
-    resetForm();
+    try {
+      const created = await withApi(() => createNote(newNote), "Failed to add note.");
+      setNotes([created, ...notes]);
+      resetForm();
+    } catch (err) {}
   }
 
-  function deleteNote(id) {
-    setNotes(notes.filter((note) => note.id !== id));
+  async function deleteNote(id) {
+    try {
+      await withApi(() => deleteNoteApi(id), "Failed to delete note.");
+      setNotes(notes.filter((note) => note.id !== id));
+      if (editingId === id) resetForm();
+    } catch (err) {}
   }
 
   function startEditing(note) {
@@ -81,18 +95,15 @@ function Notes() {
     setTags(note.tags || "");
   }
 
-  function updateNote(event) {
+  async function updateNote(event) {
     event.preventDefault();
     if (title.trim() === "" || content.trim() === "") return;
 
-    setNotes(
-      notes.map((note) =>
-        note.id === editingId
-          ? { ...note, title, category, content, tags, updatedAt: new Date().toLocaleDateString() }
-          : note
-      )
-    );
-    resetForm();
+    try {
+      const updated = await withApi(() => updateNoteApi(editingId, { title, category, content, tags }), "Failed to update note.");
+      setNotes(notes.map((note) => (note.id === editingId ? updated : note)));
+      resetForm();
+    } catch (err) {}
   }
 
   function resetForm() {
@@ -139,6 +150,12 @@ function Notes() {
         <StatCard label="Interview" value={interviewNotes} type="success" delay={3} />
       </div>
 
+      <ApiError error={error} onRetry={fetchNotes} />
+
+      {loading && notes.length === 0 ? (
+        <ApiLoading message="Loading notes..." />
+      ) : (
+        <>
       <AnimatePresence mode="wait">
         <motion.form 
           key={editingId !== null ? "edit" : "add"}
@@ -293,6 +310,8 @@ function Notes() {
           )}
         </div>
       </div>
+      </>
+      )}
     </main>
   );
 }

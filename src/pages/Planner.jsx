@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getStorage, setStorage } from "../utils/storage";
+import { getPlannerTasks, createPlannerTask, updatePlannerTask, deletePlannerTask as deletePlannerTaskApi } from "../services/plannerService";
+import { useApi } from "../hooks/useApi";
+import { ApiError, ApiLoading } from "../components/ApiFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Calendar, CheckCircle2, Circle, ArrowRight, Check } from "lucide-react";
 import "./Planner.css";
@@ -30,43 +32,58 @@ function StatCard({ label, value, type, delay = 0 }) {
 }
 
 function Planner() {
-  const [tasks, setTasks] = useState(() => getStorage("plannerTasks"));
+  const [tasks, setTasks] = useState([]);
+  const { loading, error, withApi, withApiLoading } = useApi(true);
+
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [priority, setPriority] = useState("Medium");
 
   useEffect(() => {
-    setStorage("plannerTasks", tasks);
-  }, [tasks]);
+    fetchTasks();
+  }, []);
 
-  function addTask(event) {
+  async function fetchTasks() {
+    try {
+      const data = await withApiLoading(() => getPlannerTasks(), "Failed to load planner tasks.");
+      setTasks(data);
+    } catch (err) {}
+  }
+
+  async function addTask(event) {
     event.preventDefault();
     if (title.trim() === "" || date === "") return;
 
     const newTask = {
-      id: Date.now(),
       title: title,
       date: date,
       priority: priority,
       completed: false,
     };
 
-    setTasks([...tasks, newTask]);
-    setTitle("");
-    setDate("");
-    setPriority("Medium");
+    try {
+      const created = await withApi(() => createPlannerTask(newTask), "Failed to add task.");
+      setTasks([...tasks, created]);
+      setTitle("");
+      setDate("");
+      setPriority("Medium");
+    } catch (err) {}
   }
 
-  function toggleTask(id) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  async function toggleTask(id) {
+    const taskToToggle = tasks.find((t) => t.id === id);
+    if (!taskToToggle) return;
+    try {
+      const updated = await withApi(() => updatePlannerTask(id, { ...taskToToggle, completed: !taskToToggle.completed }), "Failed to update task.");
+      setTasks(tasks.map((task) => (task.id === id ? updated : task)));
+    } catch (err) {}
   }
 
-  function deleteTask(id) {
-    setTasks(tasks.filter((task) => task.id !== id));
+  async function deleteTask(id) {
+    try {
+      await withApi(() => deletePlannerTaskApi(id), "Failed to delete task.");
+      setTasks(tasks.filter((task) => task.id !== id));
+    } catch (err) {}
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -151,6 +168,12 @@ function Planner() {
         <p>Plan and manage your daily work.</p>
       </div>
 
+      <ApiError error={error} onRetry={fetchTasks} />
+
+      {loading && tasks.length === 0 ? (
+        <ApiLoading message="Loading planner..." />
+      ) : (
+        <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
         <div className="planner-stats-grid">
           <StatCard label="Today" value={todayTasks.length} type="accent" delay={0} />
@@ -273,6 +296,8 @@ function Planner() {
           </div>
         )}
       </section>
+      </>
+      )}
     </main>
   );
 }
