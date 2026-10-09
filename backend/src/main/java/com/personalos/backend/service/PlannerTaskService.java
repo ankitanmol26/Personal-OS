@@ -14,20 +14,22 @@ import java.util.stream.Collectors;
 public class PlannerTaskService {
 
     private final PlannerTaskRepository plannerTaskRepository;
+    private final CurrentUserService currentUserService;
 
     @Autowired
-    public PlannerTaskService(PlannerTaskRepository plannerTaskRepository) {
+    public PlannerTaskService(PlannerTaskRepository plannerTaskRepository, CurrentUserService currentUserService) {
         this.plannerTaskRepository = plannerTaskRepository;
+        this.currentUserService = currentUserService;
     }
 
     public List<PlannerTaskDTO> getAllTasks() {
-        return plannerTaskRepository.findAll().stream()
+        return plannerTaskRepository.findByUserId(currentUserService.getCurrentUserId()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     public PlannerTaskDTO getTaskById(Long id) {
-        PlannerTask task = plannerTaskRepository.findById(id)
+        PlannerTask task = plannerTaskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Planner Task not found with id: " + id));
         return mapToDTO(task);
     }
@@ -38,13 +40,14 @@ public class PlannerTaskService {
         task.setDate(taskDTO.getDate());
         task.setPriority(taskDTO.getPriority());
         task.setCompleted(taskDTO.isCompleted());
+        task.setUser(currentUserService.getCurrentUser()); // Isolated temporary mechanism for Stage 5A
         
         PlannerTask savedTask = plannerTaskRepository.save(task);
         return mapToDTO(savedTask);
     }
 
     public PlannerTaskDTO updateTask(Long id, PlannerTaskDTO taskDTO) {
-        PlannerTask task = plannerTaskRepository.findById(id)
+        PlannerTask task = plannerTaskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Planner Task not found with id: " + id));
         
         task.setTitle(taskDTO.getTitle());
@@ -57,7 +60,7 @@ public class PlannerTaskService {
     }
 
     public void deleteTask(Long id) {
-        PlannerTask task = plannerTaskRepository.findById(id)
+        PlannerTask task = plannerTaskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Planner Task not found with id: " + id));
         plannerTaskRepository.delete(task);
     }

@@ -10,21 +10,24 @@ import java.util.List;
 public class DsaProblemService {
 
     private final DsaProblemRepository dsaProblemRepository;
+    private final CurrentUserService currentUserService;
 
-    public DsaProblemService(DsaProblemRepository dsaProblemRepository) {
+    public DsaProblemService(DsaProblemRepository dsaProblemRepository, CurrentUserService currentUserService) {
         this.dsaProblemRepository = dsaProblemRepository;
+        this.currentUserService = currentUserService;
     }
 
     public List<DsaProblem> getAllProblems() {
-        return dsaProblemRepository.findAll();
+        return dsaProblemRepository.findByUserId(currentUserService.getCurrentUserId());
     }
 
     public DsaProblem getProblemById(Long id) {
-        return dsaProblemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("DSA problem not found"));
+        return dsaProblemRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
+                .orElseThrow(() -> new com.personalos.backend.exception.ResourceNotFoundException("DSA problem not found"));
     }
 
     public DsaProblem createProblem(DsaProblem problem) {
+        problem.setUser(currentUserService.getCurrentUser()); // Isolated temporary mechanism for Stage 5A
         return dsaProblemRepository.save(problem);
     }
 
@@ -47,8 +50,8 @@ public class DsaProblemService {
     }
 
     public void deleteProblem(Long id) {
-        if (!dsaProblemRepository.existsById(id)) {
-            throw new RuntimeException("DSA problem not found");
+        if (!dsaProblemRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId()).isPresent()) {
+            throw new com.personalos.backend.exception.ResourceNotFoundException("DSA problem not found");
         }
 
         dsaProblemRepository.deleteById(id);

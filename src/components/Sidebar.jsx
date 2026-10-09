@@ -35,6 +35,9 @@ function Sidebar() {
         <NavLink to="/projects" className={getNavClass}>
           <span>Projects</span>
         </NavLink>
+        <NavLink to="/finance" className={getNavClass}>
+          <span>Finance</span>
+        </NavLink>
       </div>
 
       <div className="top-nav-right">

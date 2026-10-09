@@ -3,9 +3,16 @@ package com.personalos.backend.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.DecimalMin;
 
 @Entity
-@Table(name = "dsa_problems")
+@Table(name = "dsa_problems", indexes = {@Index(name = "idx_dsa_user_id", columnList = "user_id")})
 public class DsaProblem {
 
     @Id
@@ -13,6 +20,8 @@ public class DsaProblem {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank
+    @Size(max = 255)
     private String title;
 
     private String topic;
@@ -32,9 +41,14 @@ public class DsaProblem {
 
     private String revisionStatus;
 
+    @Min(0)
     private int revisionCount;
 
     private LocalDate nextRevisionDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public DsaProblem() {
     }
@@ -130,4 +144,7 @@ public class DsaProblem {
     public void setNextRevisionDate(LocalDate nextRevisionDate) {
         this.nextRevisionDate = nextRevisionDate;
     }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

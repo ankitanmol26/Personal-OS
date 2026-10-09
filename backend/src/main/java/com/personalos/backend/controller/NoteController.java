@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/notes")
@@ -31,7 +32,7 @@ public class NoteController {
     }
 
     @PostMapping
-    public ResponseEntity<NoteDTO> createNote(@RequestBody NoteDTO noteDTO) {
+    public ResponseEntity<NoteDTO> createNote(@Valid @RequestBody NoteDTO noteDTO) {
         if (noteDTO.getTitle() == null || noteDTO.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
@@ -40,7 +41,7 @@ public class NoteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NoteDTO> updateNote(@PathVariable Long id, @RequestBody NoteDTO noteDTO) {
+    public ResponseEntity<NoteDTO> updateNote(@PathVariable Long id, @Valid @RequestBody NoteDTO noteDTO) {
         if (noteDTO.getTitle() == null || noteDTO.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }

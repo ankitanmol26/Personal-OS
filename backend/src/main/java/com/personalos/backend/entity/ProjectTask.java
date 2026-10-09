@@ -3,7 +3,7 @@ package com.personalos.backend.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "project_tasks")
+@Table(name = "project_tasks", indexes = {@Index(name = "idx_ptask_project_id", columnList = "project_id")})
 public class ProjectTask {
 
     @Id

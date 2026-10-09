@@ -14,20 +14,22 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final CurrentUserService currentUserService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, CurrentUserService currentUserService) {
         this.taskRepository = taskRepository;
+        this.currentUserService = currentUserService;
     }
 
     public List<TaskDTO> getAllTasks() {
-        return taskRepository.findAll().stream()
+        return taskRepository.findByUserId(currentUserService.getCurrentUserId()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     public TaskDTO getTaskById(Long id) {
-        Task task = taskRepository.findById(id)
+        Task task = taskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
         return mapToDTO(task);
     }
@@ -39,7 +41,7 @@ public class TaskService {
     }
 
     public TaskDTO updateTask(Long id, TaskDTO taskDTO) {
-        Task existingTask = taskRepository.findById(id)
+        Task existingTask = taskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
         existingTask.setText(taskDTO.getText());
@@ -53,7 +55,7 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id)
+        Task task = taskRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
         taskRepository.delete(task);
     }
@@ -76,6 +78,7 @@ public class TaskService {
         task.setPriority(dto.getPriority());
         task.setDueDate(dto.getDueDate());
         task.setCompleted(dto.isCompleted());
+        task.setUser(currentUserService.getCurrentUser()); // Isolated temporary mechanism for Stage 5A
         return task;
     }
 }

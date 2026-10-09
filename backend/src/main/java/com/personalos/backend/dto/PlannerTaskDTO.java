@@ -1,12 +1,24 @@
 package com.personalos.backend.dto;
 
 import java.time.LocalDate;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.DecimalMin;
 
 public class PlannerTaskDTO {
 
     private Long id;
+    @NotBlank
+    @Size(max = 255)
     private String title;
+    @NotNull
     private LocalDate date;
+    @NotBlank
+    @Size(max = 50)
     private String priority;
     private boolean completed;
 

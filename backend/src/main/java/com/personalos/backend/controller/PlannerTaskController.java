@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/planner-tasks")
@@ -31,7 +32,7 @@ public class PlannerTaskController {
     }
 
     @PostMapping
-    public ResponseEntity<PlannerTaskDTO> createTask(@RequestBody PlannerTaskDTO taskDTO) {
+    public ResponseEntity<PlannerTaskDTO> createTask(@Valid @RequestBody PlannerTaskDTO taskDTO) {
         if (taskDTO.getTitle() == null || taskDTO.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
@@ -43,7 +44,7 @@ public class PlannerTaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PlannerTaskDTO> updateTask(@PathVariable Long id, @RequestBody PlannerTaskDTO taskDTO) {
+    public ResponseEntity<PlannerTaskDTO> updateTask(@PathVariable Long id, @Valid @RequestBody PlannerTaskDTO taskDTO) {
         if (taskDTO.getTitle() == null || taskDTO.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }

@@ -18,21 +18,23 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectTaskRepository projectTaskRepository;
+    private final CurrentUserService currentUserService;
 
     @Autowired
-    public ProjectService(ProjectRepository projectRepository, ProjectTaskRepository projectTaskRepository) {
+    public ProjectService(ProjectRepository projectRepository, ProjectTaskRepository projectTaskRepository, CurrentUserService currentUserService) {
         this.projectRepository = projectRepository;
         this.projectTaskRepository = projectTaskRepository;
+        this.currentUserService = currentUserService;
     }
 
     public List<ProjectDTO> getAllProjects() {
-        return projectRepository.findAll().stream()
+        return projectRepository.findByUserId(currentUserService.getCurrentUserId()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     public ProjectDTO getProjectById(Long id) {
-        Project project = projectRepository.findById(id)
+        Project project = projectRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         return mapToDTO(project);
     }
@@ -40,12 +42,13 @@ public class ProjectService {
     public ProjectDTO createProject(ProjectDTO projectDTO) {
         Project project = new Project();
         updateProjectEntityFromDTO(project, projectDTO);
+        project.setUser(currentUserService.getCurrentUser()); // Isolated temporary mechanism for Stage 5A
         Project savedProject = projectRepository.save(project);
         return mapToDTO(savedProject);
     }
 
     public ProjectDTO updateProject(Long id, ProjectDTO projectDTO) {
-        Project project = projectRepository.findById(id)
+        Project project = projectRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         
         updateProjectEntityFromDTO(project, projectDTO);
@@ -54,13 +57,13 @@ public class ProjectService {
     }
 
     public void deleteProject(Long id) {
-        Project project = projectRepository.findById(id)
+        Project project = projectRepository.findByIdAndUserId(id, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         projectRepository.delete(project);
     }
 
     public ProjectDTO addProjectTask(Long projectId, ProjectTaskDTO taskDTO) {
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdAndUserId(projectId, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
         ProjectTask task = new ProjectTask();
@@ -75,10 +78,10 @@ public class ProjectService {
     }
 
     public ProjectDTO updateProjectTask(Long projectId, Long taskId, ProjectTaskDTO taskDTO) {
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdAndUserId(projectId, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
-        ProjectTask task = projectTaskRepository.findById(taskId)
+        ProjectTask task = projectTaskRepository.findProjectTaskByOwnership(taskId, projectId, currentUserService.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
 
         if (!task.getProject().getId().equals(projectId)) {

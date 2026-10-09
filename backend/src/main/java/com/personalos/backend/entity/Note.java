@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notes")
+@Table(name = "notes", indexes = {@Index(name = "idx_note_user_id", columnList = "user_id")})
 public class Note {
 
     @Id
@@ -24,6 +24,10 @@ public class Note {
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public Note() {}
 
@@ -57,4 +61,7 @@ public class Note {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

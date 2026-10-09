@@ -1,0 +1,106 @@
+.profile-page {
+  padding: var(--space-xl);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: var(--space-xl);
+}
+
+.profile-header h1 {
+  font-size: 24px;
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--text-primary);
+}
+
+.profile-header p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.profile-section {
+  padding: var(--space-xl);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header h2 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.section-icon {
+  color: var(--accent-primary);
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 500px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.finance-input.disabled {
+  background-color: var(--bg-primary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: var(--space-md);
+}
+
+.action-feedback {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.action-feedback.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--status-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.action-feedback.success {
+  background-color: rgba(74, 222, 128, 0.1);
+  color: var(--status-success);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}

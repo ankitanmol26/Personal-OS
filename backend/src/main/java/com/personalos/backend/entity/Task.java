@@ -5,11 +5,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "tasks", indexes = {@Index(name = "idx_task_user_id", columnList = "user_id")})
 public class Task {
 
     @Id
@@ -23,6 +27,10 @@ public class Task {
     private String priority;
     private LocalDate dueDate;
     private boolean completed;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public Task() {
     }
@@ -82,4 +90,7 @@ public class Task {
     public void setCompleted(boolean completed) {
         this.completed = completed;
     }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Header() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -37,7 +41,7 @@ function Header() {
     <header className="header">
       <div className="header-greeting">
         <h1>
-          {greeting}, Anmol
+          {greeting}{user && user.name ? `, ${user.name}` : ""}
         </h1>
         <p>
           {formattedDate}
@@ -45,10 +49,19 @@ function Header() {
       </div>
 
       <div className="header-actions">
-        <button className="icon-button" aria-label="Settings">
+        <button className="icon-button" aria-label="Settings" onClick={() => navigate('/profile')}>
           <Settings size={18} />
         </button>
-        <div className="profile">A</div>
+        <button className="icon-button" aria-label="Logout" onClick={logout} title="Logout">
+          <LogOut size={18} />
+        </button>
+        {user && user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="Avatar" className="profile avatar-img" />
+        ) : (
+          <div className="profile" onClick={() => navigate('/profile')} style={{cursor: 'pointer'}}>
+            {user && user.name ? user.name.charAt(0).toUpperCase() : "U"}
+          </div>
+        )}
       </div>
     </header>
   );

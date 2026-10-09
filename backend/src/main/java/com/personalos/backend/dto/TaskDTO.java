@@ -2,15 +2,24 @@ package com.personalos.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.DecimalMin;
 
 public class TaskDTO {
 
     private Long id;
 
     @NotBlank(message = "Task text cannot be empty")
+    @Size(max = 255)
     private String text;
 
+    @Size(max = 100)
     private String category;
+    @Size(max = 50)
     private String priority;
     private LocalDate dueDate;
     private boolean completed;

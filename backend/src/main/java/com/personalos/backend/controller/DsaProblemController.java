@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/dsa")
@@ -30,7 +31,7 @@ public class DsaProblemController {
 
     @PostMapping
     public ResponseEntity<DsaProblem> createProblem(
-            @RequestBody DsaProblem problem) {
+            @Valid @RequestBody DsaProblem problem) {
 
         DsaProblem createdProblem = dsaProblemService.createProblem(problem);
 
@@ -40,7 +41,7 @@ public class DsaProblemController {
     @PutMapping("/{id}")
     public ResponseEntity<DsaProblem> updateProblem(
             @PathVariable Long id,
-            @RequestBody DsaProblem problem) {
+            @Valid @RequestBody DsaProblem problem) {
 
         return ResponseEntity.ok(
                 dsaProblemService.updateProblem(id, problem)

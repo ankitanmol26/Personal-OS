@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -32,13 +33,13 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectDTO projectDTO) {
+    public ResponseEntity<ProjectDTO> createProject(@Valid @RequestBody ProjectDTO projectDTO) {
         ProjectDTO created = projectService.createProject(projectDTO);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @RequestBody ProjectDTO projectDTO) {
+    public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectDTO projectDTO) {
         return ResponseEntity.ok(projectService.updateProject(id, projectDTO));
     }
 
@@ -51,7 +52,7 @@ public class ProjectController {
     @PostMapping("/{projectId}/tasks")
     public ResponseEntity<ProjectDTO> addProjectTask(
             @PathVariable Long projectId,
-            @RequestBody ProjectTaskDTO taskDTO) {
+            @Valid @RequestBody ProjectTaskDTO taskDTO) {
         ProjectDTO updatedProject = projectService.addProjectTask(projectId, taskDTO);
         return new ResponseEntity<>(updatedProject, HttpStatus.CREATED);
     }
@@ -60,7 +61,7 @@ public class ProjectController {
     public ResponseEntity<ProjectDTO> updateProjectTask(
             @PathVariable Long projectId,
             @PathVariable Long taskId,
-            @RequestBody ProjectTaskDTO taskDTO) {
+            @Valid @RequestBody ProjectTaskDTO taskDTO) {
         return ResponseEntity.ok(projectService.updateProjectTask(projectId, taskId, taskDTO));
     }
 }

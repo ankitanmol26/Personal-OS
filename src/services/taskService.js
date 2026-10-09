@@ -1,46 +1,17 @@
-const API_URL = 'http://localhost:8080/api/tasks';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiClient';
 
 export async function getTasks() {
-  const response = await fetch(API_URL);
-  if (!response.ok) {
-    throw new Error('Failed to fetch tasks');
-  }
-  return response.json();
+  return await apiGet('/api/tasks');
 }
 
-export async function createTask(task) {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(task),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("Create task failed:", response.status, errorBody);
-    throw new Error(`Failed to create task: ${response.status} ${errorBody}`);
-  }
-
-  return response.json();
+export async function createTask(data) {
+  return await apiPost('/api/tasks', data);
 }
 
-export async function updateTask(id, task) {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(task),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update task');
-  }
-  return response.json();
+export async function updateTask(id, data) {
+  return await apiPut(`/api/tasks/${id}`, data);
 }
 
 export async function deleteTask(id) {
-  const response = await fetch(`${API_URL}/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete task');
-  }
+  return await apiDelete(`/api/tasks/${id}`);
 }

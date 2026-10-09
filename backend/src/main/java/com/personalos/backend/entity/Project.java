@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "projects")
+@Table(name = "projects", indexes = {@Index(name = "idx_project_user_id", columnList = "user_id")})
 public class Project {
 
     @Id
@@ -33,6 +33,10 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectTask> tasks = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public Project() {
     }
@@ -66,4 +70,7 @@ public class Project {
 
     public List<ProjectTask> getTasks() { return tasks; }
     public void setTasks(List<ProjectTask> tasks) { this.tasks = tasks; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

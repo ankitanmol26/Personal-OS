@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "planner_tasks")
+@Table(name = "planner_tasks", indexes = {@Index(name = "idx_planner_user_id", columnList = "user_id")})
 public class PlannerTask {
 
     @Id
@@ -23,6 +23,10 @@ public class PlannerTask {
     @Column(nullable = false)
     private boolean completed;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     public PlannerTask() {}
 
     public Long getId() { return id; }
@@ -39,4 +43,7 @@ public class PlannerTask {
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

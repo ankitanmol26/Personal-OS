@@ -1,0 +1,161 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  padding: 4px;
+}
+
+.modal-body {
+  padding: var(--space-lg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.member-notice {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.add-member-form {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.add-member-form .finance-input {
+  flex: 1;
+}
+
+.small-btn {
+  margin-top: 0 !important;
+  padding: 0 16px;
+}
+
+.action-feedback {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.action-feedback.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--status-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.action-feedback.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--status-success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.member-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.role-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+}
+
+.role-badge.owner {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--status-success);
+}
+
+.role-badge.member {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+}
+
+.members-loading, .members-error, .members-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.members-error {
+  color: var(--status-danger);
+}
