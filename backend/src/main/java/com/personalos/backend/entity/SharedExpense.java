@@ -41,6 +41,9 @@ public class SharedExpense {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "idempotency_key", unique = true, length = 255)
+    private String idempotencyKey;
+
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SharedExpenseSplit> splits = new ArrayList<>();
 
@@ -73,6 +76,8 @@ public class SharedExpense {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
     public List<SharedExpenseSplit> getSplits() { return splits; }
     public void setSplits(List<SharedExpenseSplit> splits) { this.splits = splits; }
 }

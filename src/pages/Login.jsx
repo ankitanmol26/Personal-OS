@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import "./Auth.css";
 
 function Login() {
@@ -38,6 +39,10 @@ function Login() {
         <h2>Login to PersonalOS</h2>
         
         {error && <div className="auth-error">{error}</div>}
+        
+        <GoogleSignInButton onError={setError} />
+        
+        <div className="auth-divider">or continue with email</div>
         
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-form-group">

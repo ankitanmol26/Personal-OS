@@ -43,5 +43,5 @@ backend/target/
 .settings/
 
 # Agent Scratch Scripts
-test_stage_*.mjs
+test_*.mjs
 *.py

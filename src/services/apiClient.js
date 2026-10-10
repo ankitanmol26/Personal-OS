@@ -42,7 +42,7 @@ export const apiRequest = async (path, options = {}) => {
   return data;
 };
 
-export const apiGet = (path) => apiRequest(path, { method: "GET" });
-export const apiPost = (path, body) => apiRequest(path, { method: "POST", body: JSON.stringify(body) });
-export const apiPut = (path, body) => apiRequest(path, { method: "PUT", body: JSON.stringify(body) });
-export const apiDelete = (path) => apiRequest(path, { method: "DELETE" });
+export const apiGet = (path, options = {}) => apiRequest(path, { method: "GET", ...options });
+export const apiPost = (path, body, options = {}) => apiRequest(path, { method: "POST", body: JSON.stringify(body), ...options });
+export const apiPut = (path, body, options = {}) => apiRequest(path, { method: "PUT", body: JSON.stringify(body), ...options });
+export const apiDelete = (path, options = {}) => apiRequest(path, { method: "DELETE", ...options });

@@ -35,6 +35,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("error", ex.getMessage());
+        if (ex.getMessage() != null && ex.getMessage().startsWith("Conflict: Idempotency key")) {
+            return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        if ("ACCOUNT_EXISTS_LOCALLY".equals(ex.getMessage())) {
+            return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        }
+        if ("Google OAuth is not configured on this server".equals(ex.getMessage())) {
+            return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
+        }
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -50,7 +66,7 @@ public class GlobalExceptionHandler {
         logger.warn("Data integrity violation: ", ex);
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("error", "Database conflict or constraint violation");
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)

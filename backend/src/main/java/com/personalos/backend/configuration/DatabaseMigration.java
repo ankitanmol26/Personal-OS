@@ -25,9 +25,23 @@ public class DatabaseMigration implements HibernatePropertiesCustomizer {
                     "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
                     "name VARCHAR(255) NOT NULL, " +
                     "email VARCHAR(255) NOT NULL UNIQUE, " +
-                    "password VARCHAR(255) NOT NULL, " +
+                    "password VARCHAR(255) NULL, " +
                     "created_at DATETIME(6) NOT NULL" +
                     ") ENGINE=InnoDB");
+
+            try {
+                stmt.execute("ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NULL");
+            } catch (Exception e) {}
+
+            try {
+                stmt.execute("CREATE TABLE IF NOT EXISTS google_identities (" +
+                        "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                        "user_id BIGINT NOT NULL, " +
+                        "google_sub VARCHAR(255) NOT NULL UNIQUE, " +
+                        "created_at DATETIME(6) NOT NULL, " +
+                        "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE" +
+                        ") ENGINE=InnoDB");
+            } catch (Exception e) {}
 
             // Encode the bootstrap password safely
             String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(bootstrapPassword);

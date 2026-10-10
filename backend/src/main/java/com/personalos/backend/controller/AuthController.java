@@ -14,6 +14,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -36,6 +41,41 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/google/state")
+    public ResponseEntity<Map<String, String>> generateGoogleState(HttpServletResponse response) {
+        String state = java.util.UUID.randomUUID().toString();
+        
+        Cookie cookie = new Cookie("oauth_state", state);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // set to true in prod with HTTPS
+        cookie.setPath("/api/auth/google");
+        cookie.setMaxAge(300);
+        response.addCookie(cookie);
+        
+        Map<String, String> body = new HashMap<>();
+        body.put("state", state);
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(
+            @Valid @RequestBody com.personalos.backend.dto.GoogleAuthRequest request,
+            @CookieValue(name = "oauth_state", required = false) String oauthStateCookie,
+            HttpServletResponse response) {
+            
+        if (oauthStateCookie == null || !oauthStateCookie.equals(request.getState())) {
+            throw new IllegalArgumentException("Invalid or missing OAuth state");
+        }
+        
+        Cookie cookie = new Cookie("oauth_state", "");
+        cookie.setPath("/api/auth/google");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        LoginResponse loginResponse = authService.googleLogin(request);
+        return new ResponseEntity<>(loginResponse, HttpStatus.OK);
     }
 
     @GetMapping("/me")

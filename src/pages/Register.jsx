@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import "./Auth.css";
 
 function Register() {
@@ -56,6 +57,10 @@ function Register() {
         {error && <div className="auth-error">{error}</div>}
         {successMsg && <div className="auth-error" style={{backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.2)"}}>{successMsg}</div>}
         
+        <GoogleSignInButton onError={setError} />
+        
+        <div className="auth-divider">or continue with email</div>
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-form-group">
             <label htmlFor="name">Name</label>

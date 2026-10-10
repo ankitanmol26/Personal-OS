@@ -29,8 +29,21 @@ public class SharedExpenseController {
     }
 
     @PostMapping
-    public ResponseEntity<SharedExpenseDTO> createExpense(@PathVariable Long tripId, @Valid @RequestBody SharedExpenseRequest request) {
-        return new ResponseEntity<>(sharedExpenseService.createExpense(tripId, request), HttpStatus.CREATED);
+    public ResponseEntity<?> createExpense(
+            @PathVariable Long tripId, 
+            @Valid @RequestBody SharedExpenseRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        try {
+            return new ResponseEntity<>(sharedExpenseService.createExpense(tripId, request, idempotencyKey), HttpStatus.CREATED);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            if (idempotencyKey != null) {
+                SharedExpenseDTO existing = sharedExpenseService.getExpenseByIdempotencyKey(idempotencyKey);
+                if (existing != null) {
+                    return new ResponseEntity<>(existing, HttpStatus.CREATED);
+                }
+            }
+            throw e;
+        }
     }
 
     @DeleteMapping("/{expenseId}")

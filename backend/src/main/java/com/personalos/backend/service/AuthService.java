@@ -11,9 +11,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.personalos.backend.dto.GoogleAuthRequest;
+import com.personalos.backend.entity.GoogleIdentity;
+import com.personalos.backend.repository.GoogleIdentityRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -22,15 +29,27 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final GoogleIdentityRepository googleIdentityRepository;
+    private final GoogleTokenValidator googleTokenValidator;
+
+    @Value("${GOOGLE_OAUTH_CLIENT_ID:not-configured}")
+    private String clientId;
+
+    @Value("${GOOGLE_OAUTH_CLIENT_SECRET:not-configured}")
+    private String clientSecret;
 
     public AuthService(UserRepository userRepository, 
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       GoogleIdentityRepository googleIdentityRepository,
+                       GoogleTokenValidator googleTokenValidator) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.googleIdentityRepository = googleIdentityRepository;
+        this.googleTokenValidator = googleTokenValidator;
     }
 
     public UserDTO register(RegisterRequest request) {
@@ -78,6 +97,81 @@ public class AuthService {
             return response;
         } catch (AuthenticationException e) {
             throw new org.springframework.security.authentication.BadCredentialsException("Invalid email or password");
+        }
+    }
+
+    @Transactional
+    public LoginResponse googleLogin(GoogleAuthRequest request) {
+        if ("not-configured".equals(clientId) || "not-configured".equals(clientSecret)) {
+            throw new IllegalStateException("Google OAuth is not configured on this server");
+        }
+
+        try {
+            GoogleIdToken.Payload payload = googleTokenValidator.exchangeAndVerify(clientId, clientSecret, request.getCode(), request.getRedirectUri());
+            
+            // Validate audience
+            if (!payload.getAudience().equals(clientId) && !payload.getAudienceAsList().contains(clientId)) {
+                throw new IllegalArgumentException("Invalid audience in ID token");
+            }
+            
+            // Check email_verified
+            Boolean emailVerified = payload.getEmailVerified();
+            if (emailVerified == null || !emailVerified) {
+                throw new IllegalArgumentException("Google email not verified");
+            }
+            
+            String sub = payload.getSubject();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String picture = (String) payload.get("picture");
+            
+            // Account resolution
+            Optional<GoogleIdentity> optionalIdentity = googleIdentityRepository.findByGoogleSub(sub);
+            User user;
+            if (optionalIdentity.isPresent()) {
+                user = optionalIdentity.get().getUser();
+                // Profile sync policy: we can update avatar if changed, but we won't overwrite name silently.
+                if (picture != null && !picture.equals(user.getAvatarUrl())) {
+                    user.setAvatarUrl(picture);
+                    user = userRepository.save(user);
+                }
+            } else {
+                if (userRepository.existsByEmail(email)) {
+                    throw new IllegalStateException("ACCOUNT_EXISTS_LOCALLY");
+                }
+                
+                user = new User();
+                user.setEmail(email);
+                user.setName(name);
+                user.setAvatarUrl(picture);
+                user.setCreatedAt(LocalDateTime.now());
+                // password is null for Google-only users
+                user = userRepository.save(user);
+                
+                GoogleIdentity identity = new GoogleIdentity();
+                identity.setUser(user);
+                identity.setGoogleSub(sub);
+                identity.setCreatedAt(LocalDateTime.now());
+                googleIdentityRepository.save(identity);
+            }
+            
+            String jwtToken = jwtService.generateToken(user);
+            LoginResponse response = new LoginResponse();
+            response.setUserId(user.getId());
+            response.setName(user.getName());
+            response.setEmail(user.getEmail());
+            response.setAvatarUrl(user.getAvatarUrl());
+            response.setMessage("Google login successful");
+            response.setAccessToken(jwtToken);
+            response.setTokenType("Bearer");
+            
+            return response;
+            
+        } catch (Exception e) {
+            if (e instanceof IllegalStateException) {
+                throw (IllegalStateException) e;
+            }
+            throw new IllegalArgumentException("Google token exchange failed: " + e.getMessage());
         }
     }
 }

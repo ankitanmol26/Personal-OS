@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { getAccessToken, setAccessToken, setStoredUser, clearAuth } from "../utils/authStorage";
-import { getCurrentUser, loginUser, registerUser as registerApiService } from "../services/authService";
+import { getCurrentUser, loginUser, registerUser as registerApiService, loginWithGoogle } from "../services/authService";
 
 const AuthContext = createContext();
 
@@ -76,6 +76,23 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
+  const googleLogin = async (payload) => {
+    const response = await loginWithGoogle(payload);
+    
+    setAccessToken(response.accessToken);
+    const safeUser = {
+      id: response.userId,
+      name: response.name,
+      email: response.email,
+      avatarUrl: response.avatarUrl,
+    };
+    setStoredUser(safeUser);
+    
+    setUser(safeUser);
+    setIsAuthenticated(true);
+    return response;
+  };
+
   const register = async (data) => {
     return await registerApiService(data);
   };
@@ -93,7 +110,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, googleLogin, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

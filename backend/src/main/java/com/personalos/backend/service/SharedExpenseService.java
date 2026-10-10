@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.Optional;
 
 @Service
 public class SharedExpenseService {
@@ -55,7 +56,7 @@ public class SharedExpenseService {
     }
 
     @Transactional
-    public SharedExpenseDTO createExpense(Long tripId, SharedExpenseRequest request) {
+    public SharedExpenseDTO createExpense(Long tripId, SharedExpenseRequest request, String idempotencyKey) {
         Trip trip = getAccessibleTrip(tripId);
         
         if (!isMember(tripId, request.getPayerId())) {
@@ -75,6 +76,24 @@ public class SharedExpenseService {
         User payer = userRepository.findById(request.getPayerId()).orElseThrow();
         User creator = currentUserService.getCurrentUser();
 
+        if (idempotencyKey != null) {
+            Optional<SharedExpense> existing = sharedExpenseRepository.findByIdempotencyKey(idempotencyKey);
+            if (existing.isPresent()) {
+                SharedExpense exp = existing.get();
+                if (!exp.getCreator().getId().equals(creator.getId())) {
+                    throw new IllegalArgumentException("Conflict: Idempotency key does not belong to current user");
+                }
+                if (exp.getAmount().compareTo(request.getAmount()) != 0 
+                    || !exp.getDescription().equals(request.getDescription())
+                    || !exp.getTrip().getId().equals(tripId)
+                    || !exp.getPayer().getId().equals(request.getPayerId())
+                    || exp.getSplits().size() != request.getParticipantIds().size()) {
+                    throw new IllegalArgumentException("Conflict: Idempotency key reused with different payload");
+                }
+                return mapToDTO(exp);
+            }
+        }
+
         SharedExpense expense = new SharedExpense();
         expense.setTrip(trip);
         expense.setPayer(payer);
@@ -82,6 +101,7 @@ public class SharedExpenseService {
         expense.setDescription(request.getDescription());
         expense.setAmount(request.getAmount());
         expense.setDate(request.getDate());
+        expense.setIdempotencyKey(idempotencyKey);
 
         BigDecimal total = request.getAmount();
         int count = request.getParticipantIds().size();
@@ -197,5 +217,10 @@ public class SharedExpenseService {
 
         dto.setSplits(splits);
         return dto;
+    }
+    
+    public SharedExpenseDTO getExpenseByIdempotencyKey(String idempotencyKey) {
+        return sharedExpenseRepository.findByIdempotencyKey(idempotencyKey)
+                .map(this::mapToDTO).orElse(null);
     }
 }
