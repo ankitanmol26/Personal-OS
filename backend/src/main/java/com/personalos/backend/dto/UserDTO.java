@@ -15,6 +15,10 @@ public class UserDTO {
     private String email;
 
     private String avatarUrl;
+    private java.time.LocalDateTime createdAt;
+    private String phone;
+    private String bio;
+    private String authProvider;
 
     public UserDTO() {}
 
@@ -29,4 +33,16 @@ public class UserDTO {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public String getAuthProvider() { return authProvider; }
+    public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
 }

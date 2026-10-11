@@ -32,10 +32,10 @@ public class AuthService {
     private final GoogleIdentityRepository googleIdentityRepository;
     private final GoogleTokenValidator googleTokenValidator;
 
-    @Value("${GOOGLE_OAUTH_CLIENT_ID:not-configured}")
+    @Value("${google.oauth.client-id:${GOOGLE_OAUTH_CLIENT_ID:not-configured}}")
     private String clientId;
 
-    @Value("${GOOGLE_OAUTH_CLIENT_SECRET:not-configured}")
+    @Value("${google.oauth.client-secret:${GOOGLE_OAUTH_CLIENT_SECRET:not-configured}}")
     private String clientSecret;
 
     public AuthService(UserRepository userRepository, 
@@ -74,6 +74,16 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
+        if (optionalUser.isPresent()) {
+            User existing = optionalUser.get();
+            if (existing.getPassword() == null || existing.getPassword().isEmpty()) {
+                throw new org.springframework.security.authentication.BadCredentialsException(
+                        "This account was registered using Google Sign-In. Please sign in with Google."
+                );
+            }
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -107,7 +117,11 @@ public class AuthService {
         }
 
         try {
-            GoogleIdToken.Payload payload = googleTokenValidator.exchangeAndVerify(clientId, clientSecret, request.getCode(), request.getRedirectUri());
+            String redirectUri = request.getRedirectUri();
+            if (redirectUri == null || redirectUri.isBlank() || "http://localhost:5173".equals(redirectUri)) {
+                redirectUri = "postmessage";
+            }
+            GoogleIdToken.Payload payload = googleTokenValidator.exchangeAndVerify(clientId, clientSecret, request.getCode(), redirectUri);
             
             // Validate audience
             if (!payload.getAudience().equals(clientId) && !payload.getAudienceAsList().contains(clientId)) {

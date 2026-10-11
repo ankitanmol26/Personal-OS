@@ -1,9 +1,19 @@
 import { NavLink } from "react-router-dom";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, User } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 function Sidebar() {
+  const { user } = useAuth();
+
   const getNavClass = ({ isActive }) =>
     isActive ? "top-nav-link active" : "top-nav-link";
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
   return (
     <nav className="top-nav">
@@ -38,14 +48,26 @@ function Sidebar() {
         <NavLink to="/finance" className={getNavClass}>
           <span>Finance</span>
         </NavLink>
+        <NavLink to="/profile" className={getNavClass}>
+          <span>Profile</span>
+        </NavLink>
       </div>
 
       <div className="top-nav-right">
-        <button className="icon-btn-dark"><Search size={18} /></button>
-        <button className="icon-btn-dark relative">
+        <button className="icon-btn-dark" aria-label="Search"><Search size={18} /></button>
+        <button className="icon-btn-dark relative" aria-label="Notifications">
           <Bell size={18} />
           <span className="notification-dot"></span>
         </button>
+        <NavLink to="/profile" className="profile-nav-btn" title="View Profile" aria-label="Profile">
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.name || "User"} className="nav-avatar-img" />
+          ) : (
+            <div className="nav-avatar-fallback">
+              {user?.name ? getInitials(user.name) : <User size={16} />}
+            </div>
+          )}
+        </NavLink>
       </div>
     </nav>
   );

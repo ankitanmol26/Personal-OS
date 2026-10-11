@@ -24,7 +24,7 @@ export const apiRequest = async (path, options = {}) => {
   });
 
   if (response.status === 401) {
-    if (!path.includes("/auth/login") && !path.includes("/auth/register")) {
+    if (!path.includes("/auth/login") && !path.includes("/auth/register") && !path.includes("/auth/google")) {
         clearAuth();
         window.dispatchEvent(new Event("auth:unauthorized"));
     }

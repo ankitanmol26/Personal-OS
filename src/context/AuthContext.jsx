@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { getAccessToken, setAccessToken, setStoredUser, clearAuth } from "../utils/authStorage";
+import { getAccessToken, setAccessToken, getStoredUser, setStoredUser, clearAuth } from "../utils/authStorage";
 import { getCurrentUser, loginUser, registerUser as registerApiService, loginWithGoogle } from "../services/authService";
 
 const AuthContext = createContext();

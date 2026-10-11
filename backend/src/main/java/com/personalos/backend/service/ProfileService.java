@@ -43,6 +43,18 @@ public class ProfileService {
             user.setAvatarUrl(request.getAvatarUrl());
         }
 
+        if (request.getPhone() != null && request.getPhone().trim().isEmpty()) {
+            user.setPhone(null);
+        } else if (request.getPhone() != null) {
+            user.setPhone(request.getPhone().trim());
+        }
+
+        if (request.getBio() != null && request.getBio().trim().isEmpty()) {
+            user.setBio(null);
+        } else if (request.getBio() != null) {
+            user.setBio(request.getBio().trim());
+        }
+
         User saved = userRepository.save(user);
         return mapToDTO(saved);
     }
@@ -50,6 +62,10 @@ public class ProfileService {
     @Transactional
     public void changePassword(PasswordChangeRequest request) {
         User user = currentUserService.getCurrentUser();
+
+        if (user.getPassword() == null) {
+            throw new IllegalStateException("Google-authenticated accounts do not use a password.");
+        }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new org.springframework.security.authentication.BadCredentialsException("Incorrect current password");
@@ -65,6 +81,10 @@ public class ProfileService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setPhone(user.getPhone());
+        dto.setBio(user.getBio());
+        dto.setAuthProvider(user.getPassword() == null ? "GOOGLE" : "EMAIL");
         return dto;
     }
 }

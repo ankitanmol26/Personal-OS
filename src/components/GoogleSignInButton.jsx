@@ -24,7 +24,7 @@ const GoogleSignInButton = ({ onError }) => {
       
       const payload = {
         code,
-        redirectUri: window.location.origin,
+        redirectUri: 'postmessage',
         state
       };
       
@@ -52,22 +52,24 @@ const GoogleSignInButton = ({ onError }) => {
     onSuccess: handleGoogleSuccess,
     onError: (error) => {
       setIsLoading(false);
+      sessionStorage.removeItem('google_oauth_state');
       if (onError) onError("Google Sign-In was cancelled or failed.");
     },
     flow: 'auth-code',
-    redirect_uri: window.location.origin
   });
 
   const handleAuthClick = async () => {
     if (isLoading) return;
     try {
       setIsLoading(true);
+      if (onError) onError("");
       // Fetch fresh state from backend
       const { state } = await getGoogleOAuthState();
       sessionStorage.setItem('google_oauth_state', state);
-      login({ state });
+      login();
     } catch (err) {
       setIsLoading(false);
+      sessionStorage.removeItem('google_oauth_state');
       if (onError) onError("Unable to initialize Google Sign-In. Please try again later.");
     }
   };

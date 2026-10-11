@@ -57,7 +57,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
         Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Invalid email or password");
+        String message = ex.getMessage();
+        if (message != null && message.contains("Google")) {
+            errorResponse.put("error", message);
+        } else {
+            errorResponse.put("error", "Invalid email or password");
+        }
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 

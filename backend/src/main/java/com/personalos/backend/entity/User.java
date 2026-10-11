@@ -26,6 +26,12 @@ public class User {
     @Column(length = 2048)
     private String avatarUrl;
 
+    @Column(length = 32)
+    private String phone;
+
+    @Column(length = 500)
+    private String bio;
+
     public User() {}
 
     public Long getId() { return id; }
@@ -45,4 +51,10 @@ public class User {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 }

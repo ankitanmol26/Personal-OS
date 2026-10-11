@@ -23,10 +23,14 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment Variables
+# Environment Variables & Local Secrets
 .env
 .env.*
+!.env.example
 .env.local
+*.local
+*-local.properties
+application-local.properties
 
 # Java Build Output
 target/

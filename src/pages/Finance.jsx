@@ -16,10 +16,11 @@ const PAYMENT_METHODS = ["Cash", "UPI", "Card", "Bank Transfer", "Other"];
 const ALL_CATEGORIES = Array.from(new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES])).sort();
 
 function formatCurrency(amount) {
+  const val = Number(amount) || 0;
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR'
-  }).format(amount);
+  }).format(val);
 }
 
 function StatCard({ label, value, type, delay = 0 }) {
@@ -76,15 +77,18 @@ function Finance() {
         getTransactions(),
         getTrips()
       ]), "Failed to load data.");
-      setTransactions(tData);
-      setTrips(tripData);
-    } catch (err) {}
+      setTransactions(Array.isArray(tData) ? tData : []);
+      setTrips(Array.isArray(tripData) ? tripData : []);
+    } catch (err) {
+      setTransactions([]);
+      setTrips([]);
+    }
   }
 
   async function fetchTripsOnly() {
     try {
       const tripData = await withApi(() => getTrips(), "Failed to refresh trips.");
-      setTrips(tripData);
+      setTrips(Array.isArray(tripData) ? tripData : []);
     } catch (err) {}
   }
 
@@ -111,7 +115,7 @@ function Finance() {
     const currentMonthPrefix = new Date().toISOString().substring(0, 7);
     monthsSet.add(currentMonthPrefix);
 
-    transactions.forEach(t => {
+    (transactions || []).forEach(t => {
       const val = Number(t.amount) || 0;
       const tMonth = (t.date || "").substring(0, 7);
       
@@ -157,8 +161,10 @@ function Finance() {
       monthlyExpense: mExp,
       categorySpending: catSpend,
       filteredTransactions: filtered.sort((a, b) => {
-        if (a.date !== b.date) return b.date.localeCompare(a.date);
-        return b.id - a.id;
+        const dateA = a.date || "";
+        const dateB = b.date || "";
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        return (b.id || 0) - (a.id || 0);
       }),
       availableMonths: Array.from(monthsSet).sort().reverse()
     };
@@ -317,9 +323,9 @@ function Finance() {
         <p>Manage your money and track your spending.</p>
       </div>
 
-      <ApiError error={error} onRetry={fetchTransactions} />
+      <ApiError error={error} onRetry={fetchData} />
 
-      {loading && transactions.length === 0 ? (
+      {loading && (!transactions || transactions.length === 0) ? (
         <ApiLoading message="Loading finances..." />
       ) : (
         <>
@@ -423,7 +429,7 @@ function Finance() {
             <div className="finance-list-container">
               <h3 className="finance-list-title">Transactions</h3>
               
-              {transactions.filter(t => t.date.startsWith(filterMonth)).length === 0 ? (
+              {(transactions || []).filter(t => (t.date || "").startsWith(filterMonth)).length === 0 ? (
                 <div className="finance-empty-state">
                   No transactions for this month.
                 </div>
@@ -510,9 +516,11 @@ function Finance() {
                 ) : (
                   <div className="trips-list">
                     <AnimatePresence>
-                      {trips.map((trip, index) => {
-                        const progress = Math.min(Math.max((trip.spent / trip.budget) * 100, 0), 100);
-                        const overspent = trip.spent > trip.budget;
+                      {(trips || []).map((trip, index) => {
+                        const budget = Number(trip.budget) || 0;
+                        const spent = Number(trip.spent) || 0;
+                        const progress = budget > 0 ? Math.min(Math.max((spent / budget) * 100, 0), 100) : 0;
+                        const overspent = spent > budget;
                         return (
                           <motion.div
                             layout

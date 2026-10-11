@@ -10,13 +10,24 @@ public class ProfileUpdateRequest {
     @Size(max = 255, message = "Name must be less than 255 characters")
     private String name;
 
-    @URL(message = "Avatar URL must be a valid HTTP or HTTPS URL", protocol = "https")
     @Size(max = 2048, message = "Avatar URL must be less than 2048 characters")
     private String avatarUrl;
+
+    @Size(max = 32, message = "Phone number must be less than 32 characters")
+    private String phone;
+
+    @Size(max = 500, message = "Bio must be less than 500 characters")
+    private String bio;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 }

@@ -94,6 +94,10 @@ public class AuthController {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setPhone(user.getPhone());
+        dto.setBio(user.getBio());
+        dto.setAuthProvider(user.getPassword() == null ? "GOOGLE" : "EMAIL");
         
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
