@@ -1,1 +1,10 @@
-
+target/
+*.log
+application-local.properties
+.env
+.env.*
+.git
+.gitignore
+.idea/
+*.iml
+.mvn/
