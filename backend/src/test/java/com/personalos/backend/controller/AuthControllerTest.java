@@ -77,4 +77,28 @@ public class AuthControllerTest {
         
         assertTrue(ex.getMessage().contains("OAuth state"));
     }
+
+    @Test
+    public void testLoginCookieConfiguration() {
+        org.springframework.test.util.ReflectionTestUtils.setField(authController, "cookiesSecure", true);
+        org.springframework.test.util.ReflectionTestUtils.setField(authController, "cookiesSameSite", "None");
+
+        com.personalos.backend.dto.LoginRequest request = new com.personalos.backend.dto.LoginRequest();
+        request.setEmail("user@example.com");
+        request.setPassword("password123");
+
+        LoginResponse loginResp = new LoginResponse();
+        loginResp.setRefreshToken("sample-refresh-token");
+        when(authService.login(any())).thenReturn(loginResp);
+
+        ResponseEntity<LoginResponse> responseEntity = authController.login(request);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+        String setCookie = responseEntity.getHeaders().getFirst(org.springframework.http.HttpHeaders.SET_COOKIE);
+        assertNotNull(setCookie);
+        assertTrue(setCookie.contains("refreshToken=sample-refresh-token"));
+        assertTrue(setCookie.contains("Secure"));
+        assertTrue(setCookie.contains("SameSite=None"));
+        assertTrue(setCookie.contains("HttpOnly"));
+    }
 }

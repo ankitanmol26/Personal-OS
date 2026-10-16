@@ -48,4 +48,5 @@ backend/target/
 
 # Agent Scratch Scripts
 test_*.mjs
+!test_api_client_refresh.mjs
 *.py

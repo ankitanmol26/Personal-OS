@@ -19,3 +19,7 @@ google.oauth.client-secret=your-google-client-secret
 # Migration / Bootstrap User (Optional in dev, default disabled in prod)
 # personalos.migration.bootstrap-user.enabled=false
 # PERSONALOS_BOOTSTRAP_PASSWORD=your_bootstrap_password
+
+# Cookie Security Settings (false/Lax for local HTTP, true/None for HTTPS production)
+personalos.cookies.secure=false
+personalos.cookies.same-site=Lax

@@ -14,20 +14,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
+
 import java.util.Arrays;
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final AllowedOriginsProvider allowedOriginsProvider;
 
-    @Value("${personalos.frontend.url}")
-    private String frontendUrl;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, AllowedOriginsProvider allowedOriginsProvider) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.allowedOriginsProvider = allowedOriginsProvider;
     }
 
     @Bean
@@ -75,27 +76,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        java.util.List<String> origins = new java.util.ArrayList<>();
-        if (frontendUrl != null && !frontendUrl.isBlank()) {
-            for (String origin : frontendUrl.split(",")) {
-                String trimmed = origin.trim();
-                if (trimmed.endsWith("/")) {
-                    trimmed = trimmed.substring(0, trimmed.length() - 1);
-                }
-                if (!trimmed.isEmpty() && !origins.contains(trimmed)) {
-                    origins.add(trimmed);
-                }
-            }
-        }
-        if (!origins.contains("http://localhost:5173")) {
-            origins.add("http://localhost:5173");
-        }
-        if (!origins.contains("http://localhost:5174")) {
-            origins.add("http://localhost:5174");
-        }
+        List<String> origins = allowedOriginsProvider.getAllowedOrigins();
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Idempotency-Key", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "Idempotency-Key", "X-Requested-With",
+            "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"
+        ));
         configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization", "Idempotency-Key"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

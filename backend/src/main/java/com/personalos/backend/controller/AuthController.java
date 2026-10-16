@@ -8,13 +8,13 @@ import com.personalos.backend.entity.User;
 import com.personalos.backend.repository.UserRepository;
 import com.personalos.backend.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 import java.util.HashMap;
@@ -27,6 +27,12 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
 
+    @Value("${personalos.cookies.secure:false}")
+    private boolean cookiesSecure;
+
+    @Value("${personalos.cookies.same-site:Lax}")
+    private String cookiesSameSite;
+
     public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
@@ -38,13 +44,16 @@ public class AuthController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    private ResponseCookie createRefreshTokenCookie(String token, long maxAgeSeconds) {
-        return ResponseCookie.from("refreshToken", token != null ? token : "")
+    private ResponseCookie createRefreshTokenCookie(
+            String token, long maxAgeSeconds) {
+        return ResponseCookie.from(
+                        "refreshToken",
+                        token != null ? token : "")
                 .httpOnly(true)
-                .secure(false) // in production set true with HTTPS
+                .secure(cookiesSecure)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("Lax")
+                .sameSite(cookiesSameSite)
                 .build();
     }
 
@@ -61,12 +70,17 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> generateGoogleState(HttpServletResponse response) {
         String state = java.util.UUID.randomUUID().toString();
 
-        Cookie cookie = new Cookie("oauth_state", state);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // set to true in prod with HTTPS
-        cookie.setPath("/api/auth/google");
-        cookie.setMaxAge(300);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("oauth_state", state)
+                .httpOnly(true)
+                .secure(cookiesSecure)
+                .path("/api/auth/google")
+                .maxAge(300)
+                .sameSite(cookiesSameSite)
+                .build();
+
+        response.addHeader(
+                org.springframework.http.HttpHeaders.SET_COOKIE,
+                cookie.toString());
 
         Map<String, String> body = new HashMap<>();
         body.put("state", state);
@@ -83,10 +97,18 @@ public class AuthController {
             throw new IllegalArgumentException("Invalid or missing OAuth state");
         }
 
-        Cookie cookie = new Cookie("oauth_state", "");
-        cookie.setPath("/api/auth/google");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        ResponseCookie clearStateCookie =
+                ResponseCookie.from("oauth_state", "")
+                        .httpOnly(true)
+                        .secure(cookiesSecure)
+                        .path("/api/auth/google")
+                        .maxAge(0)
+                        .sameSite(cookiesSameSite)
+                        .build();
+
+        response.addHeader(
+                org.springframework.http.HttpHeaders.SET_COOKIE,
+                clearStateCookie.toString());
 
         LoginResponse loginResponse = authService.googleLogin(request);
         ResponseCookie refreshCookie = createRefreshTokenCookie(loginResponse.getRefreshToken(), 30L * 24 * 60 * 60);
