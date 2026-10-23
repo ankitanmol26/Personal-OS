@@ -188,6 +188,27 @@
   gap: 12px;
 }
 
+.top-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.top-nav-brand:hover {
+  opacity: 0.9;
+}
+
+.top-nav-logo-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  display: block;
+  flex-shrink: 0;
+}
+
 .logo-icon-green {
   color: var(--status-success);
 }
@@ -196,6 +217,7 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
 }
 
 .top-nav-center {

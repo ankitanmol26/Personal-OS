@@ -51,6 +51,13 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <div className="auth-brand-header">
+          <img
+            src="/personal-os-logo.png"
+            alt="PersonalOS"
+            className="auth-brand-logo"
+          />
+        </div>
         <h2>Login to PersonalOS</h2>
 
         {error && <div className="auth-error">{error}</div>}
