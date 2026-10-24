@@ -156,6 +156,8 @@
   color: var(--text-primary);
   padding: 16px;
   gap: 16px;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .section-heading {
@@ -319,14 +321,25 @@
   background-color: var(--border);
 }
 
+.icon-btn-dark.active {
+  background-color: var(--border);
+  color: var(--accent-primary);
+}
+
+.mobile-menu-toggle-btn {
+  display: none;
+}
+
 .notification-dot {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 6px;
-  height: 6px;
+  top: 9px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
   background-color: var(--accent-primary);
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 74, 34, 0.6);
+  pointer-events: none;
 }
 
 .profile-avatar {
@@ -1921,23 +1934,91 @@
 
 
 @media (max-width: 768px) {
-  .top-nav {
-    flex-wrap: wrap;
+  .app {
+    padding: 12px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     gap: 12px;
-    padding: 12px 16px;
   }
+
+  .top-nav {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+  }
+
   .top-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex: 1;
+    min-width: 0;
   }
-  .top-nav-right {
-    gap: 10px;
+
+  .top-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
   }
+
+  .logo-text-white {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .top-nav-center {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    padding: 4px;
-    -webkit-overflow-scrolling: touch;
+    display: none !important; /* Hide horizontal scrolling row on mobile */
+  }
+
+  .top-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .profile-nav-btn {
+    display: none;
+  }
+
+  .mobile-menu-toggle-btn {
+    display: flex !important;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .app {
+    padding: 8px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .top-nav {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .top-nav-left {
+    gap: 6px;
+  }
+
+  .top-nav-brand {
+    gap: 6px;
+  }
+
+  .logo-text-white {
+    font-size: 14px;
+  }
+
+  .top-nav-right {
+    gap: 6px;
+  }
+
+  .icon-btn-dark {
+    width: 36px;
+    height: 36px;
   }
 }
 

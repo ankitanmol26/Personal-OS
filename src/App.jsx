@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import PageWrapper from "./components/PageWrapper";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 import "./App.css";
 
@@ -31,32 +32,34 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/join-trip" element={<JoinTrip />} />
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <div className="app">
-                  <Sidebar />
-                  <div className="main">
-                    <Routes>
-                      <Route path="/" element={<PageWrapper className="page-wrapper"><Dashboard /></PageWrapper>} />
-                      <Route path="/tasks" element={<PageWrapper className="page-wrapper"><Tasks /></PageWrapper>} />
-                      <Route path="/planner" element={<PageWrapper className="page-wrapper"><Planner /></PageWrapper>} />
-                      <Route path="/dsa" element={<PageWrapper className="page-wrapper"><DSA /></PageWrapper>} />
-                      <Route path="/projects" element={<PageWrapper className="page-wrapper"><Projects /></PageWrapper>} />
-                      <Route path="/notes" element={<PageWrapper className="page-wrapper"><Notes /></PageWrapper>} />
-                      <Route path="/finance" element={<PageWrapper className="page-wrapper"><Finance /></PageWrapper>} />
-                      <Route path="/profile" element={<PageWrapper className="page-wrapper"><Profile /></PageWrapper>} />
-                    </Routes>
+        <NotificationProvider>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/join-trip" element={<JoinTrip />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <div className="app">
+                    <Sidebar />
+                    <div className="main">
+                      <Routes>
+                        <Route path="/" element={<PageWrapper className="page-wrapper"><Dashboard /></PageWrapper>} />
+                        <Route path="/tasks" element={<PageWrapper className="page-wrapper"><Tasks /></PageWrapper>} />
+                        <Route path="/planner" element={<PageWrapper className="page-wrapper"><Planner /></PageWrapper>} />
+                        <Route path="/dsa" element={<PageWrapper className="page-wrapper"><DSA /></PageWrapper>} />
+                        <Route path="/projects" element={<PageWrapper className="page-wrapper"><Projects /></PageWrapper>} />
+                        <Route path="/notes" element={<PageWrapper className="page-wrapper"><Notes /></PageWrapper>} />
+                        <Route path="/finance" element={<PageWrapper className="page-wrapper"><Finance /></PageWrapper>} />
+                        <Route path="/profile" element={<PageWrapper className="page-wrapper"><Profile /></PageWrapper>} />
+                      </Routes>
+                    </div>
                   </div>
-                </div>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Suspense>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Suspense>
+        </NotificationProvider>
       </BrowserRouter>
     </AuthProvider>
   );

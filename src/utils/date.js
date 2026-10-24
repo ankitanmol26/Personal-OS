@@ -11,10 +11,8 @@ export function isOverdue(task) {
 }
 
 export function addDays(dateString, days) {
-  const date = new Date(`${dateString}T00:00:00`);
-
-  date.setDate(date.getDate() + days);
-
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
   return date.toISOString().split("T")[0];
 }
 

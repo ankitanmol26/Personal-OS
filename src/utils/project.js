@@ -1,4 +1,4 @@
-import { getTodayDate } from "./date";
+import { getTodayDate } from "./date.js";
 
 export function isProjectOverdue(project) {
   if (
