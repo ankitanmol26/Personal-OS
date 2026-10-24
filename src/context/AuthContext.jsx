@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { getAccessToken, setAccessToken, getStoredUser, setStoredUser, clearAuth } from "../utils/authStorage";
 import { getCurrentUser, loginUser, registerUser as registerApiService, loginWithGoogle, refreshTokenApi, logoutUser } from "../services/authService";
+import { clearApiCache } from "../services/apiClient";
 
 const AuthContext = createContext();
 
@@ -140,6 +141,7 @@ export const AuthProvider = ({ children }) => {
       // ignore
     }
     clearAuth();
+    clearApiCache();
     setUser(null);
     setIsAuthenticated(false);
   };

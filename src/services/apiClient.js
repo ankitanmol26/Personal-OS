@@ -1,4 +1,4 @@
-import { getAccessToken, setAccessToken, clearAuth, setStoredUser } from "../utils/authStorage.js";
+import { getAccessToken, setAccessToken, clearAuth, setStoredUser, getStoredUser } from "../utils/authStorage.js";
 
 export const BASE_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) || "http://localhost:8080";
 
@@ -50,8 +50,34 @@ const getSharedRefreshPromise = () => {
   return refreshPromise;
 };
 
-export const apiRequest = async (path, options = {}) => {
-  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+// In-flight request deduplication and lightweight response caching
+const inFlightRequests = new Map();
+const responseCache = new Map();
+
+export const clearApiCache = () => {
+  responseCache.clear();
+  inFlightRequests.clear();
+};
+
+export const invalidateApiCache = (pathPrefix) => {
+  if (!pathPrefix) {
+    clearApiCache();
+    return;
+  }
+  for (const key of responseCache.keys()) {
+    if (key.includes(pathPrefix)) {
+      responseCache.delete(key);
+    }
+  }
+};
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("auth:unauthorized", () => {
+    clearApiCache();
+  });
+}
+
+const executeRequest = async (url, options, path) => {
   const token = getAccessToken();
 
   const headers = {
@@ -82,9 +108,9 @@ export const apiRequest = async (path, options = {}) => {
     if (!isAuthEndpoint) {
       if (options._retry) {
         // A retried request encountered a second 401:
-        // The refreshed session is invalid or rejected by the server.
         // Clear authentication immediately so the app is not left in a misleading authenticated state.
         clearAuth();
+        clearApiCache();
         if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
           window.dispatchEvent(new Event("auth:unauthorized"));
         }
@@ -98,14 +124,14 @@ export const apiRequest = async (path, options = {}) => {
             Authorization: `Bearer ${newToken}`,
           };
 
-          return await apiRequest(path, {
+          return await executeRequest(url, {
             ...options,
             _retry: true,
             headers: retryHeaders,
-          });
+          }, path);
         } catch (refreshErr) {
           // Refresh failed for this coordinated cycle.
-          // Consume the original response body to provide error context
+          clearApiCache();
           const originalData = await response.json().catch(() => null);
           const error = new Error(
             originalData?.error || originalData?.message || refreshErr.message || "Unauthorized"
@@ -128,6 +154,66 @@ export const apiRequest = async (path, options = {}) => {
   }
 
   return data;
+};
+
+export const apiRequest = async (path, options = {}) => {
+  const url = path.startsWith("http") ? path : `${BASE_URL}${path}`;
+  const method = (options.method || "GET").toUpperCase();
+  const isAuthEndpoint = path.includes("/api/auth/");
+  const isGet = method === "GET";
+  const canCache = isGet && !isAuthEndpoint && !options.skipCache;
+
+  if (canCache) {
+    const token = getAccessToken();
+    const storedUser = getStoredUser();
+    const userScope = storedUser?.id ? `u:${storedUser.id}` : `t:${token || "anon"}`;
+    const cacheKey = `${url}:${userScope}:${token || "anon"}`;
+
+    // 1. Return from cache if fresh (default TTL: 20 seconds)
+    const cached = responseCache.get(cacheKey);
+    const ttl = typeof options.cacheTtl === "number" ? options.cacheTtl : 20000;
+    if (cached && Date.now() - cached.timestamp < ttl) {
+      return cached.data;
+    }
+
+    // 2. Share in-flight request if already in flight
+    if (inFlightRequests.has(cacheKey)) {
+      return inFlightRequests.get(cacheKey);
+    }
+
+    // 3. Initiate new GET request and store promise
+    const requestPromise = (async () => {
+      try {
+        const data = await executeRequest(url, options, path);
+        responseCache.set(cacheKey, { data, timestamp: Date.now() });
+        return data;
+      } finally {
+        inFlightRequests.delete(cacheKey);
+      }
+    })();
+
+    inFlightRequests.set(cacheKey, requestPromise);
+    return requestPromise;
+  }
+
+  // Non-cacheable request (POST, PUT, DELETE, or skipCache)
+  const result = await executeRequest(url, options, path);
+
+  // Invalidate cache for mutating requests
+  if (method === "POST" || method === "PUT" || method === "DELETE") {
+    const segments = path.split("?")[0].split("/").filter(Boolean);
+    if (segments[0] === "api" && segments[1]) {
+      if (segments[1] === "auth") {
+        clearApiCache();
+      } else {
+        invalidateApiCache(`/api/${segments[1]}`);
+      }
+    } else {
+      invalidateApiCache(path);
+    }
+  }
+
+  return result;
 };
 
 export const apiGet = (path, options = {}) => apiRequest(path, { method: "GET", ...options });

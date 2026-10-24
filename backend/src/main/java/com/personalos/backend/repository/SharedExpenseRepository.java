@@ -9,7 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface SharedExpenseRepository extends JpaRepository<SharedExpense, Long> {
-    List<SharedExpense> findByTripIdOrderByDateDescIdDesc(Long tripId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"payer", "creator", "splits", "splits.user"})
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT se FROM SharedExpense se WHERE se.trip.id = :tripId ORDER BY se.date DESC, se.id DESC")
+    List<SharedExpense> findByTripIdOrderByDateDescIdDesc(@org.springframework.data.repository.query.Param("tripId") Long tripId);
 
     Optional<SharedExpense> findByIdempotencyKey(String idempotencyKey);
 

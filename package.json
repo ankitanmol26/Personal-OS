@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node test_api_client_refresh.mjs && node test_search_and_notifications.mjs",
+    "test": "node test_api_client_refresh.mjs && node test_search_and_notifications.mjs && node test_cache_and_dedup.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

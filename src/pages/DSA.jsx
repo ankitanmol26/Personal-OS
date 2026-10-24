@@ -100,21 +100,30 @@ function DSA() {
     if (!problemToUpdate) return;
     
     const updatedProblem = { ...problemToUpdate, solved: !problemToUpdate.solved };
+    // Optimistic immediate update (<16ms)
+    setProblems((curr) => curr.map((problem) => (problem.id === id ? updatedProblem : problem)));
     
     try {
       const result = await withApi(() => updateProblemApi(id, updatedProblem), "Failed to update problem.");
-      setProblems(problems.map((problem) => problem.id === id ? result : problem));
+      setProblems((curr) => curr.map((problem) => (problem.id === id ? result : problem)));
     } catch (error) {
-      // error handled
+      // Revert if API request fails
+      setProblems((curr) => curr.map((problem) => (problem.id === id ? problemToUpdate : problem)));
     }
   }
   
   async function deleteProblem(id) {
+    const problemToDelete = problems.find((p) => p.id === id);
+    if (!problemToDelete) return;
+
+    // Optimistically remove from UI immediately
+    setProblems((curr) => curr.filter((problem) => problem.id !== id));
+
     try {
       await withApi(() => deleteProblemApi(id), "Failed to delete problem.");
-      setProblems(problems.filter((problem) => problem.id !== id));
     } catch (error) {
-      // error handled
+      // Revert if deletion fails
+      setProblems((curr) => [...curr, problemToDelete]);
     }
   }
 
@@ -123,12 +132,15 @@ function DSA() {
     if (!problemToUpdate) return;
 
     const updatedProblem = { ...problemToUpdate, revisionStatus: status };
+    // Optimistically update revision status immediately
+    setProblems((curr) => curr.map((problem) => (problem.id === id ? updatedProblem : problem)));
 
     try {
       const result = await withApi(() => updateProblemApi(id, updatedProblem), "Failed to update revision status.");
-      setProblems(problems.map((problem) => problem.id === id ? result : problem));
+      setProblems((curr) => curr.map((problem) => (problem.id === id ? result : problem)));
     } catch (error) {
-      // error handled
+      // Revert if API request fails
+      setProblems((curr) => curr.map((problem) => (problem.id === id ? problemToUpdate : problem)));
     }
   }
 

@@ -73,17 +73,32 @@ function Planner() {
   async function toggleTask(id) {
     const taskToToggle = tasks.find((t) => t.id === id);
     if (!taskToToggle) return;
+
+    // Optimistically toggle UI immediately (<16ms)
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task)));
+
     try {
       const updated = await withApi(() => updatePlannerTask(id, { ...taskToToggle, completed: !taskToToggle.completed }), "Failed to update task.");
-      setTasks(tasks.map((task) => (task.id === id ? updated : task)));
-    } catch (err) {}
+      setTasks((curr) => curr.map((task) => (task.id === id ? updated : task)));
+    } catch (err) {
+      // Revert if API request fails
+      setTasks((curr) => curr.map((task) => (task.id === id ? taskToToggle : task)));
+    }
   }
 
   async function deleteTask(id) {
+    const taskToDelete = tasks.find((t) => t.id === id);
+    if (!taskToDelete) return;
+
+    // Optimistically remove from UI immediately
+    setTasks((curr) => curr.filter((task) => task.id !== id));
+
     try {
       await withApi(() => deletePlannerTaskApi(id), "Failed to delete task.");
-      setTasks(tasks.filter((task) => task.id !== id));
-    } catch (err) {}
+    } catch (err) {
+      // Revert if deletion fails
+      setTasks((curr) => [...curr, taskToDelete]);
+    }
   }
 
   const today = new Date().toISOString().split("T")[0];

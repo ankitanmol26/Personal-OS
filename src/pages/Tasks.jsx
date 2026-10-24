@@ -127,22 +127,36 @@ function Tasks() {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
+    // Optimistically toggle UI immediately (<16ms)
+    setTasks((currentTasks) =>
+      currentTasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+    );
+
     try {
       const updated = await withApi(() => updateTask(id, { ...task, completed: !task.completed }), "Failed to update task status.");
       setTasks((currentTasks) =>
         currentTasks.map((t) => (t.id === id ? updated : t))
       );
     } catch (err) {
-      // error handled
+      // Revert if API request fails
+      setTasks((currentTasks) =>
+        currentTasks.map((t) => (t.id === id ? task : t))
+      );
     }
   }
 
   async function handleDeleteTask(id) {
+    const taskToDelete = tasks.find((t) => t.id === id);
+    if (!taskToDelete) return;
+
+    // Optimistically remove from UI immediately
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
+
     try {
       await withApi(() => apiDeleteTask(id), "Failed to delete task.");
-      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
     } catch (err) {
-      // error handled
+      // Revert if deletion fails
+      setTasks((currentTasks) => [...currentTasks, taskToDelete]);
     }
   }
 

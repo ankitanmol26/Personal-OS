@@ -111,26 +111,30 @@ export default function SearchModal({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  // Filtered search results
-  const filteredResults = useMemo(() => {
-    return filterSearchResults(dataItems, query, selectedCategory);
-  }, [dataItems, query, selectedCategory]);
-
-  // Match counts per category for the current query
-  const categoryCounts = useMemo(() => {
+  // Combined single-pass memoized search filter & category count calculation
+  const { filteredResults, categoryCounts } = useMemo(() => {
     const counts = { all: 0, tasks: 0, projects: 0, notes: 0, dsa: 0, planner: 0, trips: 0 };
-    if (!dataItems.length) return counts;
+    if (!dataItems.length) {
+      return { filteredResults: [], categoryCounts: counts };
+    }
 
-    const allMatches = filterSearchResults(dataItems, query, 'all');
+    // Filter once for all categories
+    const allMatches = filterSearchResults(dataItems, query, "all");
     counts.all = allMatches.length;
 
-    for (const item of allMatches) {
-      if (counts[item.category] !== undefined) {
-        counts[item.category]++;
+    for (let i = 0; i < allMatches.length; i++) {
+      const cat = allMatches[i].category;
+      if (counts[cat] !== undefined) {
+        counts[cat]++;
       }
     }
-    return counts;
-  }, [dataItems, query]);
+
+    const results = selectedCategory === "all"
+      ? allMatches
+      : allMatches.filter((item) => item.category === selectedCategory);
+
+    return { filteredResults: results, categoryCounts: counts };
+  }, [dataItems, query, selectedCategory]);
 
   // Reset selected index when results change
   useEffect(() => {
