@@ -50,3 +50,6 @@ backend/target/
 test_*.mjs
 !test_api_client_refresh.mjs
 *.py
+seed_and_verify_local.mjs
+projects_flow.mjs
+DEMO_OUTLINE.md

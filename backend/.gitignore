@@ -13,3 +13,5 @@ application-local.properties
 .env.*
 !.env.example
 !application-local.properties.example
+*.log
+*.py

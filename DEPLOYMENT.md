@@ -1,9 +1,14 @@
 # PersonalOS -- Complete Free Tier Production Deployment Guide
 
-This guide provides step-by-step instructions to prepare and deploy PersonalOS using free tier cloud services:
-- Database: Aiven Free Tier (MySQL 8, managed cloud database with mandatory SSL)
-- Backend: Render Free Tier (Spring Boot 3.3.4, Java 17 / Docker)
-- Frontend: Vercel Free Tier (React 19 + Vite 8 SPA and PWA)
+This guide provides step-by-step instructions to prepare, deploy, and operate PersonalOS using free tier cloud services:
+- **Database:** Aiven Free Tier (MySQL 8, managed cloud database with mandatory SSL)
+- **Backend:** Render Free Tier (Spring Boot 3.3.4, Java 17 / Docker)
+- **Frontend:** Vercel Free Tier (React 19 + Vite 8 SPA and PWA)
+
+### Active Production Deployments
+- **Live Frontend:** [https://personal-os-five-sigma.vercel.app/](https://personal-os-five-sigma.vercel.app/)
+- **Live Backend:** [https://personal-os-backend-81o2.onrender.com/](https://personal-os-backend-81o2.onrender.com/)
+- **Health Check Probe:** [https://personal-os-backend-81o2.onrender.com/api/health](https://personal-os-backend-81o2.onrender.com/api/health)
 
 ---
 
@@ -12,7 +17,8 @@ This guide provides step-by-step instructions to prepare and deploy PersonalOS u
 ```text
                       +--------------------------------------+
                       |          Vercel (Frontend)           |
-                      |  https://<your-app>.vercel.app       |
+                      |  https://personal-os-five-sigma.     |
+                      |  vercel.app                          |
                       |  React 19 + Vite + PWA + STOMP / WS  |
                       +------------------+-------------------+
                                          |
@@ -21,7 +27,8 @@ This guide provides step-by-step instructions to prepare and deploy PersonalOS u
                                          |
                       +------------------v-------------------+
                       |           Render (Backend)           |
-                      |  https://<your-api>.onrender.com     |
+                      |  https://personal-os-backend-        |
+                      |  81o2.onrender.com                   |
                       |  Spring Boot 3.3.4 (Java 17, Docker) |
                       |  Port dynamically bound via $PORT    |
                       +------------------+-------------------+
