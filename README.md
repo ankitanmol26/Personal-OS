@@ -407,6 +407,6 @@ This repository does not currently include an open-source license file. A formal
 
 ## Author & Contact
 
-- **Author / Repository Owner:** [Ankit Sharma](https://github.com/ankitanmol26) (`ankitanmol26`)
+- **Author / Repository Owner:** [Ankit Kumar Singh](https://github.com/ankitanmol26) (`ankitanmol26`)
 - **Repository:** [https://github.com/ankitanmol26/Personal-OS](https://github.com/ankitanmol26/Personal-OS)
 - **Live Application:** [https://personal-os-five-sigma.vercel.app/](https://personal-os-five-sigma.vercel.app/)
